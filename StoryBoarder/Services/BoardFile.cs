@@ -11,6 +11,7 @@ public static class BoardFile
     private static readonly JsonSerializerOptions Options = new()
     {
         WriteIndented = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         Converters = { new JsonStringEnumConverter() },
     };
 

@@ -1,7 +1,7 @@
 # Story Boarder
 
-A small whiteboard for planning stories on Windows (C# / .NET 9 / WPF): sticky notes and frames on an
-infinite, zoomable board, with an importer for Miro's **Export to CSV** files.
+A small whiteboard for planning stories on Windows (C# / .NET 9 / WPF): sticky notes, frames, text,
+pictures and arrows on an infinite, zoomable board, with an importer for Miro's **Export to CSV** files.
 
 ## Run it
 
@@ -22,25 +22,29 @@ per row with a blank row between frames, so the importer:
 - restores bullet lists Miro flattened (`- one - two` → one bullet per line) and fixes `&amp;`-style entities.
 
 The CSV doesn't carry positions, colors or connectors, so the layout is generated. Rearrange things
-and **Save** to keep your layout as a `.storyboard` file (plain JSON).
+and **Save** to keep your layout as a `.storyboard` file (plain JSON; pictures are stored inside it).
 Boards saved as `.mlboard` (from when the app was called Miro Lite) still open.
 
 ## Controls
 
 | Action | How |
 | --- | --- |
-| Pan | Drag empty space (or inside a frame), or middle-drag |
+| Pan | Drag empty space, Space+drag or middle-drag anywhere, or arrow keys with nothing selected |
 | Zoom | Mouse wheel, Ctrl+= / Ctrl+-, Ctrl+0 to fit |
-| New sticky note | Double-click the board, press **N**, or the toolbar button |
-| New frame | **F**, or the toolbar button |
-| Move | Drag a note, or a frame by its title (its contents come along) |
-| Resize | Drag the handle at the bottom-right of a selected item |
-| Edit text | Double-click a note or frame title, or Enter; Esc / Ctrl+Enter to finish |
+| Add | Sticky note: double-click the board or **N** · Text: **T** · Frame: **F** · Picture: toolbar **Image**, paste (Ctrl+V) or drop files |
+| Move | Drag a note, picture or text, or a frame anywhere on its body (its contents come along); arrow keys nudge (Shift = further) |
+| Resize | Drag the handle at the bottom-right of a selected item (pictures keep their shape) |
+| Arrows | Select a note, then drag one of the dots on its sides onto another note, or onto empty space to create a new connected note. Click an arrow to select it; right-click to reverse or delete |
+| Edit text | Double-click a note, text or frame title, or Enter; Esc / Ctrl+Enter to finish |
 | Select | Click; Ctrl+click to add; Shift+drag for a selection box; Ctrl+A for all |
-| Color | Pick a swatch in the toolbar (applies to the selection and to new notes) |
+| Color | Pick a swatch in the toolbar (applies to selected notes and to new notes) |
+| Copy / cut / paste | Ctrl+C / Ctrl+X / Ctrl+V (pasting text from another app makes a sticky note) |
 | Duplicate / delete | Ctrl+D / Delete |
 | Undo / redo | Ctrl+Z / Ctrl+Y |
-| More | Right-click a note, frame or the board |
+| Search | Ctrl+F, type to highlight matches, Enter / Shift+Enter to jump between them |
+| Jump to a frame | **Frames ▾** in the toolbar |
+| Export a picture | **Export** (Ctrl+E) saves the selection, or the whole board if nothing is selected, as a PNG |
+| More | Right-click a note, frame, arrow or the board |
 
 ## Building the installer
 
@@ -70,6 +74,8 @@ StoryBoarder/
   ViewModels/                 board state, selection, undo/redo (whole-board snapshots)
   Services/MiroCsvImporter.cs CSV parsing and auto-layout
   Services/BoardFile.cs       .storyboard load/save (JSON)
+  Services/ImageStore.cs      pictures, kept out of undo snapshots
+  ViewModels/ConnectorViewModel.cs  arrows and their geometry
   Controls/FitText.cs         sticky-note text that shrinks to fit
 Installer/
   Package.wxs                 what the MSI installs

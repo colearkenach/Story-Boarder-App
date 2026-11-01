@@ -1,5 +1,7 @@
 using System.Windows;
+using System.Windows.Media;
 using StoryBoarder.Models;
+using StoryBoarder.Services;
 
 namespace StoryBoarder.ViewModels;
 
@@ -8,11 +10,12 @@ public abstract class BoardItemViewModel : ObservableObject
     private double _x, _y, _width, _height;
     private string _text = "";
     private string _color = Palette.DefaultNote;
-    private bool _isSelected, _isEditing;
+    private bool _isSelected, _isEditing, _isDropTarget;
 
     public abstract ItemKind Kind { get; }
     public abstract double MinSize { get; }
 
+    public string Id { get; set; } = NewId();
     public double X { get => _x; set => Set(ref _x, value); }
     public double Y { get => _y; set => Set(ref _y, value); }
     public double Width { get => _width; set => Set(ref _width, value); }
@@ -21,12 +24,17 @@ public abstract class BoardItemViewModel : ObservableObject
     public string Color { get => _color; set => Set(ref _color, value); }
     public bool IsSelected { get => _isSelected; set => Set(ref _isSelected, value); }
     public bool IsEditing { get => _isEditing; set => Set(ref _isEditing, value); }
+    /// <summary>Highlighted while an arrow is being dragged over the item.</summary>
+    public bool IsDropTarget { get => _isDropTarget; set => Set(ref _isDropTarget, value); }
 
     public Rect Bounds => new(X, Y, Width, Height);
     public Point Center => new(X + Width / 2, Y + Height / 2);
 
-    public BoardItemData ToData() => new()
+    public static string NewId() => Guid.NewGuid().ToString("N")[..12];
+
+    public virtual BoardItemData ToData() => new()
     {
+        Id = Id,
         Kind = Kind,
         X = X,
         Y = Y,
@@ -36,8 +44,9 @@ public abstract class BoardItemViewModel : ObservableObject
         Color = Color,
     };
 
-    public void Apply(BoardItemData data)
+    public virtual void Apply(BoardItemData data)
     {
+        Id = string.IsNullOrEmpty(data.Id) ? NewId() : data.Id;
         X = data.X;
         Y = data.Y;
         Width = data.Width;
@@ -48,7 +57,13 @@ public abstract class BoardItemViewModel : ObservableObject
 
     public static BoardItemViewModel FromData(BoardItemData data)
     {
-        BoardItemViewModel item = data.Kind == ItemKind.Frame ? new FrameViewModel() : new NoteViewModel();
+        BoardItemViewModel item = data.Kind switch
+        {
+            ItemKind.Frame => new FrameViewModel(),
+            ItemKind.Text => new TextViewModel(),
+            ItemKind.Image => new ImageViewModel(),
+            _ => new NoteViewModel(),
+        };
         item.Apply(data);
         return item;
     }
@@ -58,6 +73,45 @@ public sealed class NoteViewModel : BoardItemViewModel
 {
     public override ItemKind Kind => ItemKind.Note;
     public override double MinSize => 60;
+}
+
+/// <summary>Free text with no background; the font grows and shrinks with the box.</summary>
+public sealed class TextViewModel : BoardItemViewModel
+{
+    public override ItemKind Kind => ItemKind.Text;
+    public override double MinSize => 30;
+}
+
+public sealed class ImageViewModel : BoardItemViewModel
+{
+    private string? _imageId;
+
+    public override ItemKind Kind => ItemKind.Image;
+    public override double MinSize => 40;
+
+    public string? ImageId
+    {
+        get => _imageId;
+        set
+        {
+            if (Set(ref _imageId, value)) OnPropertyChanged(nameof(Source));
+        }
+    }
+
+    public ImageSource? Source => ImageStore.Get(ImageId);
+
+    public override BoardItemData ToData()
+    {
+        var data = base.ToData();
+        data.ImageId = ImageId;
+        return data;
+    }
+
+    public override void Apply(BoardItemData data)
+    {
+        base.Apply(data);
+        ImageId = data.ImageId;
+    }
 }
 
 public sealed class FrameViewModel : BoardItemViewModel

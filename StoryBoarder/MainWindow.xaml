@@ -4,15 +4,17 @@
         xmlns:c="clr-namespace:StoryBoarder.Controls"
         xmlns:m="clr-namespace:StoryBoarder.Models"
         xmlns:vm="clr-namespace:StoryBoarder.ViewModels"
-        Title="Story Boarder" Width="1400" Height="900" MinWidth="900" MinHeight="500"
+        Title="Story Boarder" Width="1400" Height="900" MinWidth="1000" MinHeight="500"
         WindowStartupLocation="CenterScreen" Background="White"
         FontFamily="Segoe UI" FontSize="13"
-        AllowDrop="True" Drop="Window_Drop" Closing="Window_Closing"
-        PreviewKeyDown="Window_PreviewKeyDown">
+        AllowDrop="True" Drop="Window_Drop" Closing="Window_Closing" Deactivated="Window_Deactivated"
+        PreviewKeyDown="Window_PreviewKeyDown" PreviewKeyUp="Window_PreviewKeyUp">
     <Window.Resources>
         <SolidColorBrush x:Key="AccentBrush" Color="#7048E8"/>
         <SolidColorBrush x:Key="ChromeBorderBrush" Color="#E3E5EA"/>
         <SolidColorBrush x:Key="MutedTextBrush" Color="#6B7180"/>
+        <SolidColorBrush x:Key="BoardBrush" Color="#F7F8FA"/>
+        <SolidColorBrush x:Key="ArrowBrush" Color="#5B6170"/>
         <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
         <c:DivideConverter x:Key="Divide"/>
@@ -106,14 +108,20 @@
             </Setter>
         </Style>
 
+        <!-- Handles keep the same on-screen size at any zoom (Handle_Loaded counter-scales them). -->
         <Style x:Key="ResizeThumb" TargetType="Thumb">
             <Setter Property="Width" Value="12"/>
             <Setter Property="Height" Value="12"/>
             <Setter Property="Margin" Value="0,0,-6,-6"/>
             <Setter Property="HorizontalAlignment" Value="Right"/>
             <Setter Property="VerticalAlignment" Value="Bottom"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
             <Setter Property="Cursor" Value="SizeNWSE"/>
             <Setter Property="Visibility" Value="Collapsed"/>
+            <EventSetter Event="Loaded" Handler="Handle_Loaded"/>
+            <EventSetter Event="DragStarted" Handler="Resize_DragStarted"/>
+            <EventSetter Event="DragDelta" Handler="Resize_DragDelta"/>
+            <EventSetter Event="DragCompleted" Handler="Drag_Completed"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Thumb">
@@ -124,16 +132,60 @@
             </Setter>
         </Style>
 
+        <!-- Dots on a selected item's sides: drag one to another item to draw an arrow. -->
+        <Style x:Key="ConnectHandle" TargetType="Thumb">
+            <Setter Property="Width" Value="14"/>
+            <Setter Property="Height" Value="14"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="Cursor" Value="Cross"/>
+            <Setter Property="ToolTip" Value="Drag to another note to connect them, or to empty space for a new note"/>
+            <EventSetter Event="Loaded" Handler="Handle_Loaded"/>
+            <EventSetter Event="DragStarted" Handler="Connect_DragStarted"/>
+            <EventSetter Event="DragDelta" Handler="Connect_DragDelta"/>
+            <EventSetter Event="DragCompleted" Handler="Connect_DragCompleted"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Ellipse Fill="White" Stroke="{StaticResource AccentBrush}" StrokeThickness="2"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <ControlTemplate x:Key="ConnectHandles" TargetType="Control">
+            <Grid>
+                <Thumb Style="{StaticResource ConnectHandle}" VerticalAlignment="Top" Margin="0,-7,0,0"/>
+                <Thumb Style="{StaticResource ConnectHandle}" HorizontalAlignment="Right" Margin="0,0,-7,0"/>
+                <Thumb Style="{StaticResource ConnectHandle}" VerticalAlignment="Bottom" Margin="0,0,0,-7"/>
+                <Thumb Style="{StaticResource ConnectHandle}" HorizontalAlignment="Left" Margin="-7,0,0,0"/>
+            </Grid>
+        </ControlTemplate>
+
+        <Style x:Key="Handles" TargetType="Control">
+            <Setter Property="Template" Value="{StaticResource ConnectHandles}"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="Visibility" Value="Collapsed"/>
+        </Style>
+
         <Style x:Key="EditBox" TargetType="TextBox">
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
             <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
             <Setter Property="Visibility" Value="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}"/>
+            <EventSetter Event="LostKeyboardFocus" Handler="EditBox_LostKeyboardFocus"/>
+            <EventSetter Event="PreviewKeyDown" Handler="EditBox_PreviewKeyDown"/>
         </Style>
 
-        <!-- Shared by notes and frames; actions apply to the selection (right-click selects the item first). -->
+        <Style x:Key="SelectionOutline" TargetType="Border">
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="IsHitTestVisible" Value="False"/>
+            <Setter Property="Visibility" Value="Collapsed"/>
+        </Style>
+
+        <!-- Shared by all items; actions apply to the selection (right-click selects the item first). -->
         <ContextMenu x:Key="ItemMenu">
-            <MenuItem Header="Add sticky note here" Click="MenuAddNote_Click"/>
             <MenuItem Header="Edit text" InputGestureText="Enter" Click="MenuEdit_Click"/>
             <MenuItem Header="Color" ItemsSource="{x:Static m:Palette.Notes}">
                 <MenuItem.ItemContainerStyle>
@@ -152,15 +204,27 @@
                 </MenuItem.ItemTemplate>
             </MenuItem>
             <Separator/>
+            <MenuItem Header="Copy" InputGestureText="Ctrl+C" Click="MenuCopy_Click"/>
+            <MenuItem Header="Cut" InputGestureText="Ctrl+X" Click="MenuCut_Click"/>
             <MenuItem Header="Duplicate" InputGestureText="Ctrl+D" Click="MenuDuplicate_Click"/>
+            <Separator/>
             <MenuItem Header="Bring to front" Click="MenuBringToFront_Click"/>
             <MenuItem Header="Send to back" Click="MenuSendToBack_Click"/>
+            <Separator/>
+            <MenuItem Header="Add sticky note here" Click="MenuAddNote_Click"/>
+            <MenuItem Header="Paste here" Click="MenuPaste_Click"/>
+            <MenuItem Header="Export selection as PNG…" Click="MenuExport_Click"/>
             <Separator/>
             <MenuItem Header="Delete" InputGestureText="Del" Click="MenuDelete_Click"/>
         </ContextMenu>
 
+        <ContextMenu x:Key="ConnectorMenu">
+            <MenuItem Header="Reverse direction" Click="MenuReverse_Click"/>
+            <MenuItem Header="Delete" InputGestureText="Del" Click="MenuDelete_Click"/>
+        </ContextMenu>
+
         <DataTemplate DataType="{x:Type vm:NoteViewModel}">
-            <Grid Width="{Binding Width}" Height="{Binding Height}" ContextMenu="{StaticResource ItemMenu}"
+            <Grid x:Name="Root" Width="{Binding Width}" Height="{Binding Height}" ContextMenu="{StaticResource ItemMenu}"
                   PreviewMouseRightButtonDown="Item_PreviewMouseRightButtonDown">
                 <Border Background="{Binding Color}" BorderBrush="#14000000" BorderThickness="1" CornerRadius="3">
                     <c:FitText Text="{Binding Text}" Margin="14" MaxFontSize="28" Foreground="#1F1F1F"/>
@@ -168,30 +232,113 @@
                 <Thumb Style="{StaticResource MoveThumb}"
                        DragStarted="Item_DragStarted" DragDelta="Item_DragDelta" DragCompleted="Drag_Completed"
                        MouseDoubleClick="Item_MouseDoubleClick"/>
-                <TextBox Style="{StaticResource EditBox}" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
+                <TextBox Style="{StaticResource EditBox}" IsVisibleChanged="EditBox_IsVisibleChanged" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
                          Background="{Binding Color}" Margin="1" Padding="10" FontSize="16" AcceptsReturn="True"
-                         TextAlignment="Center"
-                         IsVisibleChanged="EditBox_IsVisibleChanged" LostKeyboardFocus="EditBox_LostKeyboardFocus"
-                         PreviewKeyDown="EditBox_PreviewKeyDown"/>
-                <Border x:Name="Selection" Margin="-3" BorderBrush="{StaticResource AccentBrush}" BorderThickness="2"
-                        CornerRadius="5" IsHitTestVisible="False" Visibility="Collapsed"/>
-                <Thumb x:Name="Resize" Style="{StaticResource ResizeThumb}"
-                       DragStarted="Resize_DragStarted" DragDelta="Resize_DragDelta" DragCompleted="Drag_Completed"/>
+                         TextAlignment="Center"/>
+                <Border x:Name="Selection" Style="{StaticResource SelectionOutline}" Margin="-3" CornerRadius="5"/>
+                <Control x:Name="Handles" Style="{StaticResource Handles}"/>
+                <Thumb x:Name="Resize" Style="{StaticResource ResizeThumb}"/>
             </Grid>
             <DataTemplate.Triggers>
                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
                     <Setter TargetName="Selection" Property="Visibility" Value="Visible"/>
                     <Setter TargetName="Resize" Property="Visibility" Value="Visible"/>
                 </DataTrigger>
+                <DataTrigger Binding="{Binding IsDropTarget}" Value="True">
+                    <Setter TargetName="Selection" Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsSelected}" Value="True"/>
+                        <Condition Binding="{Binding IsEditing}" Value="False"/>
+                        <Condition Binding="{Binding IsMouseOver, ElementName=Root}" Value="True"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="Handles" Property="Visibility" Value="Visible"/>
+                </MultiDataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:TextViewModel}">
+            <Grid x:Name="Root" Width="{Binding Width}" Height="{Binding Height}" ContextMenu="{StaticResource ItemMenu}"
+                  PreviewMouseRightButtonDown="Item_PreviewMouseRightButtonDown">
+                <!-- Text has no background, so a faint outline on hover shows where it is. -->
+                <Border x:Name="Hover" BorderBrush="#B8BDC9" BorderThickness="1" IsHitTestVisible="False"
+                        Visibility="Collapsed"/>
+                <c:FitText Text="{Binding Text}" Margin="4,0" MaxFontSize="200" Foreground="#1F2430"/>
+                <Thumb Style="{StaticResource MoveThumb}"
+                       DragStarted="Item_DragStarted" DragDelta="Item_DragDelta" DragCompleted="Drag_Completed"
+                       MouseDoubleClick="Item_MouseDoubleClick"/>
+                <TextBox Style="{StaticResource EditBox}" IsVisibleChanged="EditBox_IsVisibleChanged" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
+                         Background="White" BorderThickness="1" BorderBrush="#B8BDC9" Padding="4" FontSize="16"
+                         AcceptsReturn="True" TextAlignment="Center" VerticalContentAlignment="Center"/>
+                <Border x:Name="Selection" Style="{StaticResource SelectionOutline}" Margin="-3" CornerRadius="3"/>
+                <Control x:Name="Handles" Style="{StaticResource Handles}"/>
+                <Thumb x:Name="Resize" Style="{StaticResource ResizeThumb}"/>
+            </Grid>
+            <DataTemplate.Triggers>
+                <Trigger SourceName="Root" Property="IsMouseOver" Value="True">
+                    <Setter TargetName="Hover" Property="Visibility" Value="Visible"/>
+                </Trigger>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter TargetName="Selection" Property="Visibility" Value="Visible"/>
+                    <Setter TargetName="Resize" Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsDropTarget}" Value="True">
+                    <Setter TargetName="Selection" Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsSelected}" Value="True"/>
+                        <Condition Binding="{Binding IsEditing}" Value="False"/>
+                        <Condition Binding="{Binding IsMouseOver, ElementName=Root}" Value="True"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="Handles" Property="Visibility" Value="Visible"/>
+                </MultiDataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:ImageViewModel}">
+            <Grid x:Name="Root" Width="{Binding Width}" Height="{Binding Height}" ContextMenu="{StaticResource ItemMenu}"
+                  PreviewMouseRightButtonDown="Item_PreviewMouseRightButtonDown">
+                <!-- Only shown if the picture couldn't be read. -->
+                <Border x:Name="Missing" Background="#EEF0F5" BorderBrush="#DADDE3" BorderThickness="1" Visibility="Collapsed">
+                    <TextBlock Text="&#xE8B9;" FontFamily="{StaticResource IconFont}" FontSize="32"
+                               Foreground="#B8BDC9" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <Image Source="{Binding Source}" Stretch="Fill" RenderOptions.BitmapScalingMode="HighQuality"/>
+                <Thumb Style="{StaticResource MoveThumb}"
+                       DragStarted="Item_DragStarted" DragDelta="Item_DragDelta" DragCompleted="Drag_Completed"/>
+                <Border x:Name="Selection" Style="{StaticResource SelectionOutline}" Margin="-3" CornerRadius="3"/>
+                <Control x:Name="Handles" Style="{StaticResource Handles}"/>
+                <Thumb x:Name="Resize" Style="{StaticResource ResizeThumb}"/>
+            </Grid>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Source}" Value="{x:Null}">
+                    <Setter TargetName="Missing" Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter TargetName="Selection" Property="Visibility" Value="Visible"/>
+                    <Setter TargetName="Resize" Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsDropTarget}" Value="True">
+                    <Setter TargetName="Selection" Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsSelected}" Value="True"/>
+                        <Condition Binding="{Binding IsMouseOver, ElementName=Root}" Value="True"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="Handles" Property="Visibility" Value="Visible"/>
+                </MultiDataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:FrameViewModel}">
             <Grid Width="{Binding Width}" Height="{Binding Height}" ContextMenu="{StaticResource ItemMenu}"
                   PreviewMouseRightButtonDown="Item_PreviewMouseRightButtonDown">
-                <!-- The body isn't draggable, so dragging inside a frame pans the board like empty space does. -->
+                <!-- Dragging the body moves the frame and everything inside (see Viewport_MouseDown). -->
                 <Border Background="{Binding Color}" BorderBrush="#DADDE3" BorderThickness="1"/>
-                <!-- Title sits above the frame; drag it to move the frame and everything inside.
+                <!-- The title sits above the frame and can be dragged too.
                      It is counter-scaled to stay readable, so its max width shrinks by the same factor. -->
                 <Grid VerticalAlignment="Top" HorizontalAlignment="Left" Height="26" Margin="0,-30,0,0"
                       RenderTransformOrigin="0,1" Loaded="FrameTitle_Loaded">
@@ -204,17 +351,13 @@
                     <Thumb Style="{StaticResource FrameTitleThumb}"
                            DragStarted="Item_DragStarted" DragDelta="FrameTitle_DragDelta" DragCompleted="Drag_Completed"
                            MouseDoubleClick="Item_MouseDoubleClick"/>
-                    <TextBox Style="{StaticResource EditBox}" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
+                    <TextBox Style="{StaticResource EditBox}" IsVisibleChanged="EditBox_IsVisibleChanged" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
                              MinWidth="180" FontSize="14" Padding="2,0" TextWrapping="NoWrap"
                              VerticalContentAlignment="Center" BorderThickness="1"
-                             BorderBrush="{StaticResource AccentBrush}"
-                             IsVisibleChanged="EditBox_IsVisibleChanged" LostKeyboardFocus="EditBox_LostKeyboardFocus"
-                             PreviewKeyDown="EditBox_PreviewKeyDown"/>
+                             BorderBrush="{StaticResource AccentBrush}"/>
                 </Grid>
-                <Border x:Name="Selection" BorderBrush="{StaticResource AccentBrush}" BorderThickness="2"
-                        IsHitTestVisible="False" Visibility="Collapsed"/>
-                <Thumb x:Name="Resize" Style="{StaticResource ResizeThumb}"
-                       DragStarted="Resize_DragStarted" DragDelta="Resize_DragDelta" DragCompleted="Drag_Completed"/>
+                <Border x:Name="Selection" Style="{StaticResource SelectionOutline}"/>
+                <Thumb x:Name="Resize" Style="{StaticResource ResizeThumb}"/>
             </Grid>
             <DataTemplate.Triggers>
                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
@@ -223,69 +366,118 @@
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:ConnectorViewModel}">
+            <Grid ContextMenu="{StaticResource ConnectorMenu}" Cursor="Hand"
+                  MouseLeftButtonDown="Connector_MouseLeftButtonDown"
+                  PreviewMouseRightButtonDown="Connector_PreviewMouseRightButtonDown">
+                <Path Data="{Binding Geometry}" Stroke="Transparent" StrokeThickness="{Binding HitThickness}"/>
+                <Path x:Name="Line" Data="{Binding Geometry}" Stroke="{StaticResource ArrowBrush}"
+                      Fill="{StaticResource ArrowBrush}" StrokeThickness="{Binding Thickness}"
+                      StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                      IsHitTestVisible="False"/>
+            </Grid>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter TargetName="Line" Property="Stroke" Value="{StaticResource AccentBrush}"/>
+                    <Setter TargetName="Line" Property="Fill" Value="{StaticResource AccentBrush}"/>
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <ItemsPanelTemplate x:Key="CanvasPanel">
+            <Canvas/>
+        </ItemsPanelTemplate>
     </Window.Resources>
 
     <DockPanel>
         <!-- Toolbar -->
         <Border DockPanel.Dock="Top" Background="White" BorderBrush="{StaticResource ChromeBorderBrush}"
                 BorderThickness="0,0,0,1" Padding="8,6" PreviewMouseDown="Chrome_PreviewMouseDown">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Story Boarder" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"
-                           Margin="6,0,12,0"/>
-                <Button Style="{StaticResource ToolButton}" Tag="&#xE8A5;" Content="New" Click="New_Click"
-                        ToolTip="New board (Ctrl+N)"/>
-                <Button Style="{StaticResource ToolButton}" Tag="&#xE8E5;" Content="Open" Click="Open_Click"
-                        ToolTip="Open a board (Ctrl+O)"/>
-                <Button Style="{StaticResource ToolButton}" Tag="&#xE74E;" Content="Save" Click="Save_Click"
-                        ToolTip="Save (Ctrl+S) · Save as (Ctrl+Shift+S)"/>
-                <Button Style="{StaticResource ToolButton}" Tag="&#xE8B5;" Content="Import CSV"
-                        Click="ImportCsv_Click" ToolTip="Import a board exported from Miro as CSV (Ctrl+I) · or drop a .csv on the window"/>
-                <Rectangle Style="{StaticResource ToolSeparator}"/>
-                <Button Style="{StaticResource ToolButton}" Tag="&#xE7A7;" Click="Undo_Click"
-                        IsEnabled="{Binding CanUndo}" ToolTip="Undo (Ctrl+Z)"/>
-                <Button Style="{StaticResource ToolButton}" Tag="&#xE7A6;" Click="Redo_Click"
-                        IsEnabled="{Binding CanRedo}" ToolTip="Redo (Ctrl+Y)"/>
-                <Rectangle Style="{StaticResource ToolSeparator}"/>
-                <Button Style="{StaticResource ToolButton}" Tag="&#xE70B;" Click="AddNote_Click"
-                        ToolTip="Add a sticky note (N, or double-click the board)">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Sticky note" VerticalAlignment="Center"/>
-                        <Border x:Name="NoteColorChip" Width="12" Height="12" CornerRadius="3" Margin="7,0,0,0"
-                                BorderBrush="#33000000" BorderThickness="1"/>
-                    </StackPanel>
-                </Button>
-                <Button Style="{StaticResource ToolButton}" Tag="&#xE739;" Content="Frame" Click="AddFrame_Click"
-                        ToolTip="Add a frame (F)"/>
-                <Rectangle Style="{StaticResource ToolSeparator}"/>
-                <ItemsControl ItemsSource="{x:Static m:Palette.Notes}" VerticalAlignment="Center">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Button Click="Swatch_Click" Focusable="False" Margin="1,0"
-                                    ToolTip="{Binding Name}">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border x:Name="Ring" Width="24" Height="24" CornerRadius="12" Padding="2"
-                                                BorderThickness="2" BorderBrush="Transparent" Background="Transparent">
-                                            <Border CornerRadius="9" Background="{Binding Hex}"
-                                                    BorderBrush="#26000000" BorderThickness="1"/>
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="Ring" Property="BorderBrush" Value="#B8BDC9"/>
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Button.Template>
-                            </Button>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
+            <DockPanel>
+                <!-- Search -->
+                <Border DockPanel.Dock="Right" Width="210" Height="30" CornerRadius="6" Background="#F1F3F7"
+                        Margin="6,0,2,0">
+                    <Grid>
+                        <TextBlock Text="&#xE721;" FontFamily="{StaticResource IconFont}" FontSize="13"
+                                   Foreground="{StaticResource MutedTextBrush}" Margin="10,0,0,0"
+                                   VerticalAlignment="Center" IsHitTestVisible="False"/>
+                        <TextBlock x:Name="SearchHint" Text="Search (Ctrl+F)" Foreground="{StaticResource MutedTextBrush}"
+                                   Margin="32,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"/>
+                        <TextBox x:Name="SearchBox" Margin="28,0,54,0" Background="Transparent" BorderThickness="0"
+                                 VerticalContentAlignment="Center"
+                                 TextChanged="SearchBox_TextChanged" PreviewKeyDown="SearchBox_PreviewKeyDown"
+                                 ToolTip="Enter: next match · Shift+Enter: previous · Esc: clear"/>
+                        <TextBlock x:Name="SearchCount" Foreground="{StaticResource MutedTextBrush}" FontSize="12"
+                                   HorizontalAlignment="Right" Margin="0,0,10,0" VerticalAlignment="Center"
+                                   IsHitTestVisible="False"/>
+                    </Grid>
+                </Border>
+                <Button DockPanel.Dock="Right" Style="{StaticResource ToolButton}" Tag="&#xE8FD;" Content="Frames ▾"
+                        Click="Frames_Click" ToolTip="Jump to a frame"/>
+
+                <StackPanel Orientation="Horizontal">
+                    <Button Style="{StaticResource ToolButton}" Tag="&#xE8A5;" Content="New" Click="New_Click"
+                            ToolTip="New board (Ctrl+N)"/>
+                    <Button Style="{StaticResource ToolButton}" Tag="&#xE8E5;" Content="Open" Click="Open_Click"
+                            ToolTip="Open a board (Ctrl+O)"/>
+                    <Button Style="{StaticResource ToolButton}" Tag="&#xE74E;" Content="Save" Click="Save_Click"
+                            ToolTip="Save (Ctrl+S) · Save as (Ctrl+Shift+S)"/>
+                    <Button Style="{StaticResource ToolButton}" Tag="&#xE8B5;" Content="Import CSV"
+                            Click="ImportCsv_Click" ToolTip="Import a board exported from Miro as CSV (Ctrl+I) · or drop a .csv on the window"/>
+                    <Button Style="{StaticResource ToolButton}" Tag="&#xEDE1;" Content="Export" Click="Export_Click"
+                            ToolTip="Export the board, or just the selection, as a PNG picture (Ctrl+E)"/>
+                    <Rectangle Style="{StaticResource ToolSeparator}"/>
+                    <Button Style="{StaticResource ToolButton}" Tag="&#xE7A7;" Click="Undo_Click"
+                            IsEnabled="{Binding CanUndo}" ToolTip="Undo (Ctrl+Z)"/>
+                    <Button Style="{StaticResource ToolButton}" Tag="&#xE7A6;" Click="Redo_Click"
+                            IsEnabled="{Binding CanRedo}" ToolTip="Redo (Ctrl+Y)"/>
+                    <Rectangle Style="{StaticResource ToolSeparator}"/>
+                    <Button Style="{StaticResource ToolButton}" Tag="&#xE70B;" Click="AddNote_Click"
+                            ToolTip="Add a sticky note (N, or double-click the board)">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Sticky note" VerticalAlignment="Center"/>
+                            <Border x:Name="NoteColorChip" Width="12" Height="12" CornerRadius="3" Margin="7,0,0,0"
+                                    BorderBrush="#33000000" BorderThickness="1"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource ToolButton}" Tag="&#xE8D2;" Content="Text" Click="AddText_Click"
+                            ToolTip="Add text (T)"/>
+                    <Button Style="{StaticResource ToolButton}" Tag="&#xE739;" Content="Frame" Click="AddFrame_Click"
+                            ToolTip="Add a frame (F)"/>
+                    <Button Style="{StaticResource ToolButton}" Tag="&#xE8B9;" Content="Image" Click="AddImage_Click"
+                            ToolTip="Add pictures · or paste one (Ctrl+V), or drop picture files on the board"/>
+                    <Rectangle Style="{StaticResource ToolSeparator}"/>
+                    <ItemsControl ItemsSource="{x:Static m:Palette.Notes}" VerticalAlignment="Center">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Click="Swatch_Click" Focusable="False" Margin="1,0"
+                                        ToolTip="{Binding Name}">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="Ring" Width="24" Height="24" CornerRadius="12" Padding="2"
+                                                    BorderThickness="2" BorderBrush="Transparent" Background="Transparent">
+                                                <Border CornerRadius="9" Background="{Binding Hex}"
+                                                        BorderBrush="#26000000" BorderThickness="1"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Ring" Property="BorderBrush" Value="#B8BDC9"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </DockPanel>
         </Border>
 
         <!-- Status bar -->
@@ -295,14 +487,16 @@
                 <TextBlock DockPanel.Dock="Right" Foreground="{StaticResource MutedTextBrush}"
                            Text="{Binding Items.Count, StringFormat={}{0} items}"/>
                 <TextBlock Foreground="{StaticResource MutedTextBrush}" TextTrimming="CharacterEllipsis"
-                           Text="Double-click: new note  ·  Drag: pan  ·  Shift+drag: select  ·  Scroll: zoom  ·  Double-click a note: edit (Esc to finish)  ·  Del: delete  ·  Ctrl+Z: undo"/>
+                           Text="Drag frames and notes to move them  ·  Drag empty space, Space+drag or middle-drag: pan  ·  Shift+drag: select  ·  Scroll: zoom  ·  Drag a selected note's dots: draw an arrow  ·  Right-click: more"/>
             </DockPanel>
         </Border>
 
         <Grid>
-            <!-- The board. Everything inside BoardItems is in board coordinates; the view transform pans and zooms it. -->
-            <Grid x:Name="Viewport" Background="#F7F8FA" ClipToBounds="True" Focusable="True"
+            <!-- The board. Everything inside BoardItems and Overlay is in board coordinates;
+                 the view transform pans and zooms them. -->
+            <Grid x:Name="Viewport" Background="{StaticResource BoardBrush}" ClipToBounds="True" Focusable="True"
                   FocusVisualStyle="{x:Null}"
+                  PreviewMouseDown="Viewport_PreviewMouseDown"
                   MouseDown="Viewport_MouseDown" MouseMove="Viewport_MouseMove" MouseUp="Viewport_MouseUp"
                   MouseWheel="Viewport_MouseWheel" LostMouseCapture="Viewport_LostMouseCapture"
                   PreviewMouseRightButtonDown="Viewport_PreviewMouseRightButtonDown">
@@ -328,27 +522,38 @@
                     </Rectangle.Fill>
                 </Rectangle>
 
-                <ItemsControl x:Name="BoardItems" ItemsSource="{Binding Items}" Focusable="False"
-                              HorizontalAlignment="Left" VerticalAlignment="Top">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <Canvas/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemContainerStyle>
-                        <Style TargetType="ContentPresenter">
-                            <Setter Property="Canvas.Left" Value="{Binding X}"/>
-                            <Setter Property="Canvas.Top" Value="{Binding Y}"/>
-                            <Setter Property="Panel.ZIndex" Value="1"/>
-                            <Style.Triggers>
-                                <!-- Frames always sit underneath notes. -->
-                                <DataTrigger Binding="{Binding Kind}" Value="Frame">
-                                    <Setter Property="Panel.ZIndex" Value="0"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ItemsControl.ItemContainerStyle>
+                <!-- Items and arrows (ItemsSource is set in code). Frames sit at the bottom, then arrows, then
+                     notes, text and pictures, so an arrow passes under notes instead of across their text. -->
+                <ItemsControl x:Name="BoardItems" Focusable="False"
+                              HorizontalAlignment="Left" VerticalAlignment="Top"
+                              ItemsPanel="{StaticResource CanvasPanel}">
+                    <ItemsControl.ItemContainerStyleSelector>
+                        <c:BoardItemStyleSelector>
+                            <c:BoardItemStyleSelector.ItemStyle>
+                                <Style TargetType="ContentPresenter">
+                                    <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                    <Setter Property="Canvas.Top" Value="{Binding Y}"/>
+                                    <Setter Property="Panel.ZIndex" Value="2"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Kind}" Value="Frame">
+                                            <Setter Property="Panel.ZIndex" Value="0"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </c:BoardItemStyleSelector.ItemStyle>
+                            <c:BoardItemStyleSelector.ConnectorStyle>
+                                <Style TargetType="ContentPresenter">
+                                    <Setter Property="Panel.ZIndex" Value="1"/>
+                                </Style>
+                            </c:BoardItemStyleSelector.ConnectorStyle>
+                        </c:BoardItemStyleSelector>
+                    </ItemsControl.ItemContainerStyleSelector>
                 </ItemsControl>
+
+                <Canvas x:Name="Overlay" IsHitTestVisible="False" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Path x:Name="ConnectPreview" Stroke="{StaticResource AccentBrush}" Fill="{StaticResource AccentBrush}"
+                          StrokeLineJoin="Round" StrokeStartLineCap="Round" Opacity="0.8" Visibility="Collapsed"/>
+                </Canvas>
 
                 <Canvas IsHitTestVisible="False">
                     <Rectangle x:Name="SelectionBox" Visibility="Collapsed" Fill="#1A7048E8"
@@ -357,11 +562,16 @@
 
                 <Grid.ContextMenu>
                     <ContextMenu>
+                        <MenuItem Header="Paste here" InputGestureText="Ctrl+V" Click="MenuPaste_Click"/>
+                        <Separator/>
                         <MenuItem Header="Add sticky note here" InputGestureText="Double-click" Click="MenuAddNote_Click"/>
-                        <MenuItem Header="Add frame here" Click="MenuAddFrame_Click"/>
+                        <MenuItem Header="Add text here" InputGestureText="T" Click="MenuAddText_Click"/>
+                        <MenuItem Header="Add frame here" InputGestureText="F" Click="MenuAddFrame_Click"/>
+                        <MenuItem Header="Add picture here…" Click="MenuAddImage_Click"/>
                         <Separator/>
                         <MenuItem Header="Select all" InputGestureText="Ctrl+A" Click="MenuSelectAll_Click"/>
                         <MenuItem Header="Zoom to fit" InputGestureText="Ctrl+0" Click="ZoomFit_Click"/>
+                        <MenuItem Header="Export board as PNG…" Click="MenuExportBoard_Click"/>
                     </ContextMenu>
                 </Grid.ContextMenu>
             </Grid>

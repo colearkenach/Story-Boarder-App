@@ -120,7 +120,8 @@ public static class MiroCsvImporter
         return items;
     }
 
-    private static double NoteSize(string text) =>
+    /// <summary>Side length of a square note that holds the text at a readable size.</summary>
+    public static double NoteSize(string text) =>
         (text.Length + 25 * text.Count(c => c == '\n')) switch
         {
             <= 70 => SmallNote,

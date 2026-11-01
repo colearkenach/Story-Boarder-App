@@ -9,7 +9,7 @@
     <ApplicationIcon>Assets\StoryBoarder.ico</ApplicationIcon>
 
     <!-- The installer takes its version from here. -->
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Product>Story Boarder</Product>
     <AssemblyTitle>Story Boarder</AssemblyTitle>
   </PropertyGroup>
