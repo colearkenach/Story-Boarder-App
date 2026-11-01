@@ -1,0 +1,20 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+
+  <!-- Builds MiroLite-Setup.msi. Run: dotnet build Installer -c Release -->
+  <PropertyGroup>
+    <OutputName>MiroLite-Setup</OutputName>
+    <InstallerPlatform>x64</InstallerPlatform>
+    <AppPublishDir>$(MSBuildThisFileDirectory)obj\app</AppPublishDir>
+    <DefineConstants>AppDir=$(AppPublishDir)</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WixToolset.UI.wixext" Version="5.0.2" />
+  </ItemGroup>
+
+  <!-- Publish the app as a single self-contained exe, then package that. -->
+  <Target Name="PublishApp" BeforeTargets="BeforeBuild">
+    <Exec Command="dotnet publish &quot;$(MSBuildThisFileDirectory)..\MiroLite\MiroLite.csproj&quot; -p:PublishProfile=Installer -o &quot;$(AppPublishDir)&quot; -nologo" />
+  </Target>
+
+</Project>

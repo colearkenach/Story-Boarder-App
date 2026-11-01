@@ -1,0 +1,410 @@
+﻿<Window x:Class="MiroLite.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:c="clr-namespace:MiroLite.Controls"
+        xmlns:m="clr-namespace:MiroLite.Models"
+        xmlns:vm="clr-namespace:MiroLite.ViewModels"
+        Title="Miro Lite" Width="1400" Height="900" MinWidth="900" MinHeight="500"
+        WindowStartupLocation="CenterScreen" Background="White"
+        FontFamily="Segoe UI" FontSize="13"
+        AllowDrop="True" Drop="Window_Drop" Closing="Window_Closing"
+        PreviewKeyDown="Window_PreviewKeyDown">
+    <Window.Resources>
+        <SolidColorBrush x:Key="AccentBrush" Color="#4262FF"/>
+        <SolidColorBrush x:Key="ChromeBorderBrush" Color="#E3E5EA"/>
+        <SolidColorBrush x:Key="MutedTextBrush" Color="#6B7180"/>
+        <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+        <c:DivideConverter x:Key="Divide"/>
+
+        <!-- Flat button: Tag holds an icon glyph, Content an optional label. -->
+        <Style x:Key="ToolButton" TargetType="Button">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#1F2430"/>
+            <Setter Property="Padding" Value="9,6"/>
+            <Setter Property="Margin" Value="1,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="{TemplateBinding Background}" CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"
+                                           FontFamily="{StaticResource IconFont}" FontSize="14"
+                                           VerticalAlignment="Center"/>
+                                <ContentPresenter x:Name="Label" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Content" Value="{x:Null}">
+                                <Setter TargetName="Label" Property="Visibility" Value="Collapsed"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#EEF0F5"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#DFE3EC"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.35"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="{StaticResource AccentBrush}" CornerRadius="8" Padding="18,9">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#3350E0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ToolSeparator" TargetType="Rectangle">
+            <Setter Property="Width" Value="1"/>
+            <Setter Property="Margin" Value="8,4"/>
+            <Setter Property="Fill" Value="{StaticResource ChromeBorderBrush}"/>
+        </Style>
+
+        <!-- Invisible surface that turns mouse drags into DragDelta events. -->
+        <Style x:Key="MoveThumb" TargetType="Thumb">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border Background="Transparent"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="FrameTitleThumb" TargetType="Thumb">
+            <Setter Property="MinWidth" Value="40"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border Background="Transparent" Padding="2,0">
+                            <TextBlock Text="{Binding Text}" FontSize="14" Foreground="{StaticResource MutedTextBrush}"
+                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ResizeThumb" TargetType="Thumb">
+            <Setter Property="Width" Value="12"/>
+            <Setter Property="Height" Value="12"/>
+            <Setter Property="Margin" Value="0,0,-6,-6"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="VerticalAlignment" Value="Bottom"/>
+            <Setter Property="Cursor" Value="SizeNWSE"/>
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border Background="White" BorderBrush="{StaticResource AccentBrush}"
+                                BorderThickness="2" CornerRadius="2"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="EditBox" TargetType="TextBox">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="Visibility" Value="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}"/>
+        </Style>
+
+        <!-- Shared by notes and frames; actions apply to the selection (right-click selects the item first). -->
+        <ContextMenu x:Key="ItemMenu">
+            <MenuItem Header="Add sticky note here" Click="MenuAddNote_Click"/>
+            <MenuItem Header="Edit text" InputGestureText="Enter" Click="MenuEdit_Click"/>
+            <MenuItem Header="Color" ItemsSource="{x:Static m:Palette.Notes}">
+                <MenuItem.ItemContainerStyle>
+                    <Style TargetType="MenuItem">
+                        <EventSetter Event="Click" Handler="MenuColor_Click"/>
+                    </Style>
+                </MenuItem.ItemContainerStyle>
+                <MenuItem.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="16" Height="16" CornerRadius="3" Background="{Binding Hex}"
+                                    BorderBrush="#33000000" BorderThickness="1" Margin="0,0,8,0"/>
+                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </MenuItem.ItemTemplate>
+            </MenuItem>
+            <Separator/>
+            <MenuItem Header="Duplicate" InputGestureText="Ctrl+D" Click="MenuDuplicate_Click"/>
+            <MenuItem Header="Bring to front" Click="MenuBringToFront_Click"/>
+            <MenuItem Header="Send to back" Click="MenuSendToBack_Click"/>
+            <Separator/>
+            <MenuItem Header="Delete" InputGestureText="Del" Click="MenuDelete_Click"/>
+        </ContextMenu>
+
+        <DataTemplate DataType="{x:Type vm:NoteViewModel}">
+            <Grid Width="{Binding Width}" Height="{Binding Height}" ContextMenu="{StaticResource ItemMenu}"
+                  PreviewMouseRightButtonDown="Item_PreviewMouseRightButtonDown">
+                <Border Background="{Binding Color}" BorderBrush="#14000000" BorderThickness="1" CornerRadius="3">
+                    <c:FitText Text="{Binding Text}" Margin="14" MaxFontSize="28" Foreground="#1F1F1F"/>
+                </Border>
+                <Thumb Style="{StaticResource MoveThumb}"
+                       DragStarted="Item_DragStarted" DragDelta="Item_DragDelta" DragCompleted="Drag_Completed"
+                       MouseDoubleClick="Item_MouseDoubleClick"/>
+                <TextBox Style="{StaticResource EditBox}" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
+                         Background="{Binding Color}" Margin="1" Padding="10" FontSize="16" AcceptsReturn="True"
+                         TextAlignment="Center"
+                         IsVisibleChanged="EditBox_IsVisibleChanged" LostKeyboardFocus="EditBox_LostKeyboardFocus"
+                         PreviewKeyDown="EditBox_PreviewKeyDown"/>
+                <Border x:Name="Selection" Margin="-3" BorderBrush="{StaticResource AccentBrush}" BorderThickness="2"
+                        CornerRadius="5" IsHitTestVisible="False" Visibility="Collapsed"/>
+                <Thumb x:Name="Resize" Style="{StaticResource ResizeThumb}"
+                       DragStarted="Resize_DragStarted" DragDelta="Resize_DragDelta" DragCompleted="Drag_Completed"/>
+            </Grid>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter TargetName="Selection" Property="Visibility" Value="Visible"/>
+                    <Setter TargetName="Resize" Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:FrameViewModel}">
+            <Grid Width="{Binding Width}" Height="{Binding Height}" ContextMenu="{StaticResource ItemMenu}"
+                  PreviewMouseRightButtonDown="Item_PreviewMouseRightButtonDown">
+                <!-- The body isn't draggable, so dragging inside a frame pans the board like empty space does. -->
+                <Border Background="{Binding Color}" BorderBrush="#DADDE3" BorderThickness="1"/>
+                <!-- Title sits above the frame; drag it to move the frame and everything inside.
+                     It is counter-scaled to stay readable, so its max width shrinks by the same factor. -->
+                <Grid VerticalAlignment="Top" HorizontalAlignment="Left" Height="26" Margin="0,-30,0,0"
+                      RenderTransformOrigin="0,1" Loaded="FrameTitle_Loaded">
+                    <Grid.MaxWidth>
+                        <MultiBinding Converter="{StaticResource Divide}">
+                            <Binding Path="Width"/>
+                            <Binding Path="TitleScale" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                        </MultiBinding>
+                    </Grid.MaxWidth>
+                    <Thumb Style="{StaticResource FrameTitleThumb}"
+                           DragStarted="Item_DragStarted" DragDelta="FrameTitle_DragDelta" DragCompleted="Drag_Completed"
+                           MouseDoubleClick="Item_MouseDoubleClick"/>
+                    <TextBox Style="{StaticResource EditBox}" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
+                             MinWidth="180" FontSize="14" Padding="2,0" TextWrapping="NoWrap"
+                             VerticalContentAlignment="Center" BorderThickness="1"
+                             BorderBrush="{StaticResource AccentBrush}"
+                             IsVisibleChanged="EditBox_IsVisibleChanged" LostKeyboardFocus="EditBox_LostKeyboardFocus"
+                             PreviewKeyDown="EditBox_PreviewKeyDown"/>
+                </Grid>
+                <Border x:Name="Selection" BorderBrush="{StaticResource AccentBrush}" BorderThickness="2"
+                        IsHitTestVisible="False" Visibility="Collapsed"/>
+                <Thumb x:Name="Resize" Style="{StaticResource ResizeThumb}"
+                       DragStarted="Resize_DragStarted" DragDelta="Resize_DragDelta" DragCompleted="Drag_Completed"/>
+            </Grid>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter TargetName="Selection" Property="Visibility" Value="Visible"/>
+                    <Setter TargetName="Resize" Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- Toolbar -->
+        <Border DockPanel.Dock="Top" Background="White" BorderBrush="{StaticResource ChromeBorderBrush}"
+                BorderThickness="0,0,0,1" Padding="8,6" PreviewMouseDown="Chrome_PreviewMouseDown">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Miro Lite" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"
+                           Margin="6,0,12,0"/>
+                <Button Style="{StaticResource ToolButton}" Tag="&#xE8A5;" Content="New" Click="New_Click"
+                        ToolTip="New board (Ctrl+N)"/>
+                <Button Style="{StaticResource ToolButton}" Tag="&#xE8E5;" Content="Open" Click="Open_Click"
+                        ToolTip="Open a board (Ctrl+O)"/>
+                <Button Style="{StaticResource ToolButton}" Tag="&#xE74E;" Content="Save" Click="Save_Click"
+                        ToolTip="Save (Ctrl+S) · Save as (Ctrl+Shift+S)"/>
+                <Button Style="{StaticResource ToolButton}" Tag="&#xE8B5;" Content="Import Miro CSV"
+                        Click="ImportCsv_Click" ToolTip="Import a Miro CSV export (Ctrl+I) · or drop a .csv on the window"/>
+                <Rectangle Style="{StaticResource ToolSeparator}"/>
+                <Button Style="{StaticResource ToolButton}" Tag="&#xE7A7;" Click="Undo_Click"
+                        IsEnabled="{Binding CanUndo}" ToolTip="Undo (Ctrl+Z)"/>
+                <Button Style="{StaticResource ToolButton}" Tag="&#xE7A6;" Click="Redo_Click"
+                        IsEnabled="{Binding CanRedo}" ToolTip="Redo (Ctrl+Y)"/>
+                <Rectangle Style="{StaticResource ToolSeparator}"/>
+                <Button Style="{StaticResource ToolButton}" Tag="&#xE70B;" Click="AddNote_Click"
+                        ToolTip="Add a sticky note (N, or double-click the board)">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Sticky note" VerticalAlignment="Center"/>
+                        <Border x:Name="NoteColorChip" Width="12" Height="12" CornerRadius="3" Margin="7,0,0,0"
+                                BorderBrush="#33000000" BorderThickness="1"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource ToolButton}" Tag="&#xE739;" Content="Frame" Click="AddFrame_Click"
+                        ToolTip="Add a frame (F)"/>
+                <Rectangle Style="{StaticResource ToolSeparator}"/>
+                <ItemsControl ItemsSource="{x:Static m:Palette.Notes}" VerticalAlignment="Center">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Click="Swatch_Click" Focusable="False" Margin="1,0"
+                                    ToolTip="{Binding Name}">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Ring" Width="24" Height="24" CornerRadius="12" Padding="2"
+                                                BorderThickness="2" BorderBrush="Transparent" Background="Transparent">
+                                            <Border CornerRadius="9" Background="{Binding Hex}"
+                                                    BorderBrush="#26000000" BorderThickness="1"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Ring" Property="BorderBrush" Value="#B8BDC9"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom" Background="White" BorderBrush="{StaticResource ChromeBorderBrush}"
+                BorderThickness="0,1,0,0" Padding="12,5">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Right" Foreground="{StaticResource MutedTextBrush}"
+                           Text="{Binding Items.Count, StringFormat={}{0} items}"/>
+                <TextBlock Foreground="{StaticResource MutedTextBrush}" TextTrimming="CharacterEllipsis"
+                           Text="Double-click: new note  ·  Drag: pan  ·  Shift+drag: select  ·  Scroll: zoom  ·  Double-click a note: edit (Esc to finish)  ·  Del: delete  ·  Ctrl+Z: undo"/>
+            </DockPanel>
+        </Border>
+
+        <Grid>
+            <!-- The board. Everything inside BoardItems is in board coordinates; the view transform pans and zooms it. -->
+            <Grid x:Name="Viewport" Background="#F7F8FA" ClipToBounds="True" Focusable="True"
+                  FocusVisualStyle="{x:Null}"
+                  MouseDown="Viewport_MouseDown" MouseMove="Viewport_MouseMove" MouseUp="Viewport_MouseUp"
+                  MouseWheel="Viewport_MouseWheel" LostMouseCapture="Viewport_LostMouseCapture"
+                  PreviewMouseRightButtonDown="Viewport_PreviewMouseRightButtonDown">
+                <Rectangle x:Name="GridLayer" IsHitTestVisible="False">
+                    <Rectangle.Fill>
+                        <DrawingBrush x:Name="GridBrush" TileMode="Tile" Viewport="0,0,24,24" ViewportUnits="Absolute"
+                                      Viewbox="0,0,24,24" ViewboxUnits="Absolute">
+                            <DrawingBrush.Drawing>
+                                <DrawingGroup>
+                                    <GeometryDrawing Brush="Transparent">
+                                        <GeometryDrawing.Geometry>
+                                            <RectangleGeometry Rect="0,0,24,24"/>
+                                        </GeometryDrawing.Geometry>
+                                    </GeometryDrawing>
+                                    <GeometryDrawing Brush="#CDD1DA">
+                                        <GeometryDrawing.Geometry>
+                                            <EllipseGeometry Center="12,12" RadiusX="1.3" RadiusY="1.3"/>
+                                        </GeometryDrawing.Geometry>
+                                    </GeometryDrawing>
+                                </DrawingGroup>
+                            </DrawingBrush.Drawing>
+                        </DrawingBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+
+                <ItemsControl x:Name="BoardItems" ItemsSource="{Binding Items}" Focusable="False"
+                              HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                            <Setter Property="Canvas.Top" Value="{Binding Y}"/>
+                            <Setter Property="Panel.ZIndex" Value="1"/>
+                            <Style.Triggers>
+                                <!-- Frames always sit underneath notes. -->
+                                <DataTrigger Binding="{Binding Kind}" Value="Frame">
+                                    <Setter Property="Panel.ZIndex" Value="0"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                </ItemsControl>
+
+                <Canvas IsHitTestVisible="False">
+                    <Rectangle x:Name="SelectionBox" Visibility="Collapsed" Fill="#1A4262FF"
+                               Stroke="{StaticResource AccentBrush}" StrokeThickness="1"/>
+                </Canvas>
+
+                <Grid.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Add sticky note here" InputGestureText="Double-click" Click="MenuAddNote_Click"/>
+                        <MenuItem Header="Add frame here" Click="MenuAddFrame_Click"/>
+                        <Separator/>
+                        <MenuItem Header="Select all" InputGestureText="Ctrl+A" Click="MenuSelectAll_Click"/>
+                        <MenuItem Header="Zoom to fit" InputGestureText="Ctrl+0" Click="ZoomFit_Click"/>
+                    </ContextMenu>
+                </Grid.ContextMenu>
+            </Grid>
+
+            <!-- Shown while the board is empty. -->
+            <Border HorizontalAlignment="Center" VerticalAlignment="Center" Background="White" CornerRadius="12"
+                    Padding="36,28" BorderBrush="{StaticResource ChromeBorderBrush}" BorderThickness="1"
+                    PreviewMouseDown="Chrome_PreviewMouseDown">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Items.Count}" Value="0">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel>
+                    <TextBlock Text="Your board is empty" FontSize="18" FontWeight="SemiBold"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="Import a Miro CSV export, drop a .csv file here, or double-click anywhere to add a sticky note."
+                               Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" TextAlignment="Center"
+                               MaxWidth="320" Margin="0,8,0,18"/>
+                    <Button Style="{StaticResource PrimaryButton}" Content="Import Miro CSV…" Click="ImportCsv_Click"
+                            HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Zoom controls -->
+            <Border HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="16" Background="White"
+                    CornerRadius="8" Padding="4" BorderBrush="{StaticResource ChromeBorderBrush}" BorderThickness="1"
+                    PreviewMouseDown="Chrome_PreviewMouseDown">
+                <StackPanel Orientation="Horizontal">
+                    <Button Style="{StaticResource ToolButton}" Tag="&#xE71F;" Click="ZoomOut_Click"
+                            ToolTip="Zoom out (Ctrl+-)"/>
+                    <TextBlock x:Name="ZoomText" Width="46" TextAlignment="Center" VerticalAlignment="Center"/>
+                    <Button Style="{StaticResource ToolButton}" Tag="&#xE8A3;" Click="ZoomIn_Click"
+                            ToolTip="Zoom in (Ctrl+=)"/>
+                    <Button Style="{StaticResource ToolButton}" Tag="&#xE9A6;" Click="ZoomFit_Click"
+                            ToolTip="Zoom to fit (Ctrl+0)"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </DockPanel>
+</Window>

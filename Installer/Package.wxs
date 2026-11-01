@@ -1,0 +1,53 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+  <!-- The version comes from MiroLite.exe, i.e. <Version> in MiroLite.csproj. Bump it for each release
+       so installing a new MSI upgrades the old one in place. Keep UpgradeCode the same forever. -->
+  <Package Name="Miro Lite"
+           Manufacturer="Miro Lite"
+           Version="!(bind.FileVersion.MiroLiteExe)"
+           UpgradeCode="902C00A4-56F0-4919-B61E-1D0B06D5F294">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Icon Id="AppIcon.ico" SourceFile="..\MiroLite\Assets\MiroLite.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon.ico" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Miro Lite" />
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder" />
+    <StandardDirectory Id="DesktopFolder" />
+
+    <Feature Id="Main" Title="Miro Lite">
+      <Component Directory="INSTALLFOLDER">
+        <File Id="MiroLiteExe" Source="$(var.AppDir)\MiroLite.exe" KeyPath="yes" />
+
+        <!-- Double-clicking a .mlboard file opens it in Miro Lite. -->
+        <ProgId Id="MiroLite.Board" Description="Miro Lite board" Icon="MiroLiteExe" IconIndex="0">
+          <Extension Id="mlboard" ContentType="application/x-mlboard">
+            <Verb Id="open" TargetFile="MiroLiteExe" Argument="&quot;%1&quot;" />
+          </Extension>
+        </ProgId>
+      </Component>
+
+      <!-- Shortcuts live in their own component; Windows Installer wants a registry key path for them. -->
+      <Component Id="Shortcuts" Directory="ProgramMenuFolder">
+        <Shortcut Id="StartMenuShortcut" Name="Miro Lite" Target="[INSTALLFOLDER]MiroLite.exe"
+                  WorkingDirectory="INSTALLFOLDER" />
+        <Shortcut Id="DesktopShortcut" Directory="DesktopFolder" Name="Miro Lite" Target="[INSTALLFOLDER]MiroLite.exe"
+                  WorkingDirectory="INSTALLFOLDER" />
+        <RegistryValue Root="HKCU" Key="Software\Miro Lite" Name="Shortcuts" Type="integer" Value="1"
+                       KeyPath="yes" />
+      </Component>
+    </Feature>
+
+    <!-- Standard wizard (welcome, install folder, install) with the license page skipped. -->
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+    <UI>
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Order="99" />
+      <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="99" />
+    </UI>
+  </Package>
+</Wix>
