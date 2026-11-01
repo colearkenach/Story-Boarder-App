@@ -1,11 +1,11 @@
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using MiroLite.Models;
+using StoryBoarder.Models;
 
-namespace MiroLite.Services;
+namespace StoryBoarder.Services;
 
-/// <summary>Reads and writes boards as JSON (.mlboard files).</summary>
+/// <summary>Reads and writes boards as JSON (.storyboard files).</summary>
 public static class BoardFile
 {
     private static readonly JsonSerializerOptions Options = new()

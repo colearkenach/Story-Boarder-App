@@ -7,15 +7,17 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Microsoft.Win32;
-using MiroLite.Models;
-using MiroLite.Services;
-using MiroLite.ViewModels;
+using StoryBoarder.Models;
+using StoryBoarder.Services;
+using StoryBoarder.ViewModels;
 
-namespace MiroLite;
+namespace StoryBoarder;
 
 public partial class MainWindow : Window
 {
-    private const string BoardFilter = "Miro Lite board (*.mlboard)|*.mlboard|All files (*.*)|*.*";
+    private const string BoardFilter = "Story Boarder board (*.storyboard)|*.storyboard|All files (*.*)|*.*";
+    // Also matches .mlboard, the extension boards were saved with before the app was renamed.
+    private const string OpenFilter = "Story Boarder board (*.storyboard)|*.storyboard;*.mlboard|All files (*.*)|*.*";
     private const string CsvFilter = "Miro CSV export (*.csv)|*.csv|All files (*.*)|*.*";
     private const double MinZoom = 0.05, MaxZoom = 4;
 
@@ -74,7 +76,7 @@ public partial class MainWindow : Window
     // ---------- Files ----------
 
     private void New_Click(object sender, RoutedEventArgs e) => NewBoard();
-    private void Open_Click(object sender, RoutedEventArgs e) => OpenWithDialog(BoardFilter);
+    private void Open_Click(object sender, RoutedEventArgs e) => OpenWithDialog(OpenFilter);
     private void ImportCsv_Click(object sender, RoutedEventArgs e) => OpenWithDialog(CsvFilter);
     private void Save_Click(object sender, RoutedEventArgs e) => Save(saveAs: false);
 
@@ -105,7 +107,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, $"Couldn't open {Path.GetFileName(path)}.\n\n{ex.Message}", "Miro Lite",
+            MessageBox.Show(this, $"Couldn't open {Path.GetFileName(path)}.\n\n{ex.Message}", "Story Boarder",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -116,7 +118,7 @@ public partial class MainWindow : Window
         var path = _filePath;
         if (saveAs || path is null)
         {
-            var dialog = new SaveFileDialog { Filter = BoardFilter, FileName = _docName, DefaultExt = ".mlboard" };
+            var dialog = new SaveFileDialog { Filter = BoardFilter, FileName = _docName, DefaultExt = ".storyboard" };
             if (dialog.ShowDialog(this) != true) return false;
             path = dialog.FileName;
         }
@@ -126,7 +128,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, $"Couldn't save {Path.GetFileName(path)}.\n\n{ex.Message}", "Miro Lite",
+            MessageBox.Show(this, $"Couldn't save {Path.GetFileName(path)}.\n\n{ex.Message}", "Story Boarder",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return false;
         }
@@ -139,7 +141,7 @@ public partial class MainWindow : Window
     {
         EndEditing();
         if (!_board.IsDirty) return true;
-        var answer = MessageBox.Show(this, $"Save changes to \"{_docName}\"?", "Miro Lite",
+        var answer = MessageBox.Show(this, $"Save changes to \"{_docName}\"?", "Story Boarder",
             MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
         return answer switch
         {
@@ -156,7 +158,7 @@ public partial class MainWindow : Window
         UpdateTitle();
     }
 
-    private void UpdateTitle() => Title = $"{_docName}{(_board.IsDirty ? " •" : "")} – Miro Lite";
+    private void UpdateTitle() => Title = $"{_docName}{(_board.IsDirty ? " •" : "")} – Story Boarder";
 
     private void Window_Closing(object sender, CancelEventArgs e)
     {
@@ -489,7 +491,7 @@ public partial class MainWindow : Window
         switch (e.Key)
         {
             case Key.N when ctrl: NewBoard(); break;
-            case Key.O when ctrl: OpenWithDialog(BoardFilter); break;
+            case Key.O when ctrl: OpenWithDialog(OpenFilter); break;
             case Key.I when ctrl: OpenWithDialog(CsvFilter); break;
             case Key.S when ctrl: Save(saveAs: shift); break;
             case Key.Z when ctrl && shift:

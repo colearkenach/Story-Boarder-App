@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace MiroLite.ViewModels;
+namespace StoryBoarder.ViewModels;
 
 public abstract class ObservableObject : INotifyPropertyChanged
 {

@@ -1,44 +1,41 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
-
-  <!-- The version comes from MiroLite.exe, i.e. <Version> in MiroLite.csproj. Bump it for each release
-       so installing a new MSI upgrades the old one in place. Keep UpgradeCode the same forever. -->
-  <Package Name="Miro Lite"
-           Manufacturer="Miro Lite"
-           Version="!(bind.FileVersion.MiroLiteExe)"
+  <Package Name="Story Boarder"
+           Manufacturer="Black Flame Studios - Tools"
+           Version="!(bind.FileVersion.StoryBoarderExe)"
            UpgradeCode="902C00A4-56F0-4919-B61E-1D0B06D5F294">
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
     <MediaTemplate EmbedCab="yes" />
 
-    <Icon Id="AppIcon.ico" SourceFile="..\MiroLite\Assets\MiroLite.ico" />
+    <Icon Id="AppIcon.ico" SourceFile="..\StoryBoarder\Assets\StoryBoarder.ico" />
     <Property Id="ARPPRODUCTICON" Value="AppIcon.ico" />
 
     <StandardDirectory Id="ProgramFiles64Folder">
-      <Directory Id="INSTALLFOLDER" Name="Miro Lite" />
+      <Directory Id="INSTALLFOLDER" Name="Story Boarder" />
     </StandardDirectory>
     <StandardDirectory Id="ProgramMenuFolder" />
     <StandardDirectory Id="DesktopFolder" />
 
-    <Feature Id="Main" Title="Miro Lite">
+    <Feature Id="Main" Title="Story Boarder">
       <Component Directory="INSTALLFOLDER">
-        <File Id="MiroLiteExe" Source="$(var.AppDir)\MiroLite.exe" KeyPath="yes" />
+        <File Id="StoryBoarderExe" Source="$(var.AppDir)\StoryBoarder.exe" KeyPath="yes" />
 
-        <!-- Double-clicking a .mlboard file opens it in Miro Lite. -->
-        <ProgId Id="MiroLite.Board" Description="Miro Lite board" Icon="MiroLiteExe" IconIndex="0">
-          <Extension Id="mlboard" ContentType="application/x-mlboard">
-            <Verb Id="open" TargetFile="MiroLiteExe" Argument="&quot;%1&quot;" />
+        <!-- Double-clicking a .storyboard file opens it in Story Boarder. -->
+        <ProgId Id="StoryBoarder.Board" Description="Story Boarder board" Icon="StoryBoarderExe" IconIndex="0">
+          <Extension Id="storyboard" ContentType="application/x-storyboard">
+            <Verb Id="open" TargetFile="StoryBoarderExe" Argument="&quot;%1&quot;" />
           </Extension>
         </ProgId>
       </Component>
 
       <!-- Shortcuts live in their own component; Windows Installer wants a registry key path for them. -->
       <Component Id="Shortcuts" Directory="ProgramMenuFolder">
-        <Shortcut Id="StartMenuShortcut" Name="Miro Lite" Target="[INSTALLFOLDER]MiroLite.exe"
+        <Shortcut Id="StartMenuShortcut" Name="Story Boarder" Target="[INSTALLFOLDER]StoryBoarder.exe"
                   WorkingDirectory="INSTALLFOLDER" />
-        <Shortcut Id="DesktopShortcut" Directory="DesktopFolder" Name="Miro Lite" Target="[INSTALLFOLDER]MiroLite.exe"
-                  WorkingDirectory="INSTALLFOLDER" />
-        <RegistryValue Root="HKCU" Key="Software\Miro Lite" Name="Shortcuts" Type="integer" Value="1"
+        <Shortcut Id="DesktopShortcut" Directory="DesktopFolder" Name="Story Boarder"
+                  Target="[INSTALLFOLDER]StoryBoarder.exe" WorkingDirectory="INSTALLFOLDER" />
+        <RegistryValue Root="HKCU" Key="Software\Story Boarder" Name="Shortcuts" Type="integer" Value="1"
                        KeyPath="yes" />
       </Component>
     </Feature>

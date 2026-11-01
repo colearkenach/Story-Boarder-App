@@ -1,4 +1,4 @@
-namespace MiroLite.Models;
+namespace StoryBoarder.Models;
 
 public enum ItemKind
 {
@@ -6,7 +6,7 @@ public enum ItemKind
     Frame,
 }
 
-/// <summary>One sticky note or frame as it is stored in a .mlboard file.</summary>
+/// <summary>One sticky note or frame as it is stored in a .storyboard file.</summary>
 public sealed class BoardItemData
 {
     public ItemKind Kind { get; set; }

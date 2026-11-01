@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace MiroLite;
+namespace StoryBoarder;
 
 public partial class App : Application
 {
@@ -10,7 +10,7 @@ public partial class App : Application
         // Show unexpected errors instead of letting the app vanish with unsaved work.
         DispatcherUnhandledException += (_, args) =>
         {
-            MessageBox.Show(args.Exception.Message, "Miro Lite", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(args.Exception.Message, "Story Boarder", MessageBoxButton.OK, MessageBoxImage.Error);
             args.Handled = true;
         };
     }

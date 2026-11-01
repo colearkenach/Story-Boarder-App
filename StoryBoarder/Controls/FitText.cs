@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
 
-namespace MiroLite.Controls;
+namespace StoryBoarder.Controls;
 
 /// <summary>
 /// Centered, wrapped text that shrinks its font until it fits, the way Miro sticky notes do.

@@ -1,7 +1,7 @@
 using System.Windows;
-using MiroLite.Models;
+using StoryBoarder.Models;
 
-namespace MiroLite.ViewModels;
+namespace StoryBoarder.ViewModels;
 
 public abstract class BoardItemViewModel : ObservableObject
 {

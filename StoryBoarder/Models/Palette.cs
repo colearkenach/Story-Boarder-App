@@ -1,4 +1,4 @@
-namespace MiroLite.Models;
+namespace StoryBoarder.Models;
 
 public sealed record PaletteColor(string Name, string Hex);
 

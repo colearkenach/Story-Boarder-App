@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 
-namespace MiroLite.Controls;
+namespace StoryBoarder.Controls;
 
 /// <summary>Divides the first bound number by the second.</summary>
 public sealed class DivideConverter : IMultiValueConverter

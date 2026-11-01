@@ -1,9 +1,9 @@
 using System.Collections.ObjectModel;
 using System.Windows;
-using MiroLite.Models;
-using MiroLite.Services;
+using StoryBoarder.Models;
+using StoryBoarder.Services;
 
-namespace MiroLite.ViewModels;
+namespace StoryBoarder.ViewModels;
 
 /// <summary>
 /// The board's items plus selection, moving and undo/redo. Undo works on whole-board

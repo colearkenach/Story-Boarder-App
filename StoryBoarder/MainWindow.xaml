@@ -1,16 +1,16 @@
-﻿<Window x:Class="MiroLite.MainWindow"
+﻿<Window x:Class="StoryBoarder.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:c="clr-namespace:MiroLite.Controls"
-        xmlns:m="clr-namespace:MiroLite.Models"
-        xmlns:vm="clr-namespace:MiroLite.ViewModels"
-        Title="Miro Lite" Width="1400" Height="900" MinWidth="900" MinHeight="500"
+        xmlns:c="clr-namespace:StoryBoarder.Controls"
+        xmlns:m="clr-namespace:StoryBoarder.Models"
+        xmlns:vm="clr-namespace:StoryBoarder.ViewModels"
+        Title="Story Boarder" Width="1400" Height="900" MinWidth="900" MinHeight="500"
         WindowStartupLocation="CenterScreen" Background="White"
         FontFamily="Segoe UI" FontSize="13"
         AllowDrop="True" Drop="Window_Drop" Closing="Window_Closing"
         PreviewKeyDown="Window_PreviewKeyDown">
     <Window.Resources>
-        <SolidColorBrush x:Key="AccentBrush" Color="#4262FF"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#7048E8"/>
         <SolidColorBrush x:Key="ChromeBorderBrush" Color="#E3E5EA"/>
         <SolidColorBrush x:Key="MutedTextBrush" Color="#6B7180"/>
         <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
@@ -67,7 +67,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bg" Property="Background" Value="#3350E0"/>
+                                <Setter TargetName="Bg" Property="Background" Value="#6741D9"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -230,7 +230,7 @@
         <Border DockPanel.Dock="Top" Background="White" BorderBrush="{StaticResource ChromeBorderBrush}"
                 BorderThickness="0,0,0,1" Padding="8,6" PreviewMouseDown="Chrome_PreviewMouseDown">
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Miro Lite" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"
+                <TextBlock Text="Story Boarder" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"
                            Margin="6,0,12,0"/>
                 <Button Style="{StaticResource ToolButton}" Tag="&#xE8A5;" Content="New" Click="New_Click"
                         ToolTip="New board (Ctrl+N)"/>
@@ -238,8 +238,8 @@
                         ToolTip="Open a board (Ctrl+O)"/>
                 <Button Style="{StaticResource ToolButton}" Tag="&#xE74E;" Content="Save" Click="Save_Click"
                         ToolTip="Save (Ctrl+S) · Save as (Ctrl+Shift+S)"/>
-                <Button Style="{StaticResource ToolButton}" Tag="&#xE8B5;" Content="Import Miro CSV"
-                        Click="ImportCsv_Click" ToolTip="Import a Miro CSV export (Ctrl+I) · or drop a .csv on the window"/>
+                <Button Style="{StaticResource ToolButton}" Tag="&#xE8B5;" Content="Import CSV"
+                        Click="ImportCsv_Click" ToolTip="Import a board exported from Miro as CSV (Ctrl+I) · or drop a .csv on the window"/>
                 <Rectangle Style="{StaticResource ToolSeparator}"/>
                 <Button Style="{StaticResource ToolButton}" Tag="&#xE7A7;" Click="Undo_Click"
                         IsEnabled="{Binding CanUndo}" ToolTip="Undo (Ctrl+Z)"/>
@@ -351,7 +351,7 @@
                 </ItemsControl>
 
                 <Canvas IsHitTestVisible="False">
-                    <Rectangle x:Name="SelectionBox" Visibility="Collapsed" Fill="#1A4262FF"
+                    <Rectangle x:Name="SelectionBox" Visibility="Collapsed" Fill="#1A7048E8"
                                Stroke="{StaticResource AccentBrush}" StrokeThickness="1"/>
                 </Canvas>
 
@@ -383,10 +383,10 @@
                 <StackPanel>
                     <TextBlock Text="Your board is empty" FontSize="18" FontWeight="SemiBold"
                                HorizontalAlignment="Center"/>
-                    <TextBlock Text="Import a Miro CSV export, drop a .csv file here, or double-click anywhere to add a sticky note."
+                    <TextBlock Text="Import a CSV exported from Miro, drop a .csv file here, or double-click anywhere to add a sticky note."
                                Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" TextAlignment="Center"
                                MaxWidth="320" Margin="0,8,0,18"/>
-                    <Button Style="{StaticResource PrimaryButton}" Content="Import Miro CSV…" Click="ImportCsv_Click"
+                    <Button Style="{StaticResource PrimaryButton}" Content="Import CSV…" Click="ImportCsv_Click"
                             HorizontalAlignment="Center"/>
                 </StackPanel>
             </Border>

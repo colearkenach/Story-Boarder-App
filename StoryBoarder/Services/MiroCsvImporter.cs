@@ -2,9 +2,9 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
-using MiroLite.Models;
+using StoryBoarder.Models;
 
-namespace MiroLite.Services;
+namespace StoryBoarder.Services;
 
 /// <summary>
 /// Turns a Miro "Export to CSV" file into a board. Miro writes one text item per row and

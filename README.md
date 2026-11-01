@@ -1,19 +1,19 @@
-# Miro Lite
+# Story Boarder
 
-A small Miro-style whiteboard for Windows (C# / .NET 9 / WPF): sticky notes and frames on an
+A small whiteboard for planning stories on Windows (C# / .NET 9 / WPF): sticky notes and frames on an
 infinite, zoomable board, with an importer for Miro's **Export to CSV** files.
 
 ## Run it
 
 ```bash
-dotnet run --project MiroLite
+dotnet run --project StoryBoarder
 ```
 
-Or open `MiroLite.sln` in Visual Studio / Rider and press F5.
+Or open `StoryBoarder.sln` in Visual Studio / Rider and press F5.
 
 ## Importing a Miro CSV
 
-Click **Import Miro CSV** (Ctrl+I), or drop a `.csv` onto the window. Miro's export has one text item
+Click **Import CSV** (Ctrl+I), or drop a `.csv` onto the window. Miro's export has one text item
 per row with a blank row between frames, so the importer:
 
 - turns each block of rows into a **frame**, titled with the block's first row;
@@ -22,7 +22,8 @@ per row with a blank row between frames, so the importer:
 - restores bullet lists Miro flattened (`- one - two` → one bullet per line) and fixes `&amp;`-style entities.
 
 The CSV doesn't carry positions, colors or connectors, so the layout is generated. Rearrange things
-and **Save** to keep your layout as a `.mlboard` file (plain JSON).
+and **Save** to keep your layout as a `.storyboard` file (plain JSON).
+Boards saved as `.mlboard` (from when the app was called Miro Lite) still open.
 
 ## Controls
 
@@ -47,27 +48,28 @@ and **Save** to keep your layout as a `.mlboard` file (plain JSON).
 dotnet build Installer -c Release
 ```
 
-This publishes a single self-contained `MiroLite.exe` (no .NET install needed on the target PC) and
+This publishes a single self-contained `StoryBoarder.exe` (no .NET install needed on the target PC) and
 packages it with [WiX Toolset v5](https://wixtoolset.org/) into
-`Installer/bin/Release/MiroLite-Setup.msi`. The installer:
+`Installer/bin/Release/StoryBoarder-Setup.msi`. The installer:
 
-- installs to `C:\Program Files\Miro Lite` (asks for admin once);
+- installs to `C:\Program Files\Story Boarder` (asks for admin once);
 - adds Start Menu and desktop shortcuts;
-- makes `.mlboard` files open in Miro Lite when double-clicked;
-- shows up in Settings → Apps, where it can be uninstalled.
+- makes `.storyboard` files open in Story Boarder when double-clicked;
+- shows up in Settings → Apps, where it can be uninstalled;
+- replaces an earlier Miro Lite install, if there is one.
 
-To ship an update, bump `<Version>` in `MiroLite/MiroLite.csproj` and rebuild; installing the new MSI
+To ship an update, bump `<Version>` in `StoryBoarder/StoryBoarder.csproj` and rebuild; installing the new MSI
 replaces the old version. The MSI isn't code-signed, so Windows SmartScreen will warn on first run
 ("More info" → "Run anyway") until you sign it with a certificate.
 
 ## Project layout
 
 ```
-MiroLite/
+StoryBoarder/
   MainWindow.xaml(.cs)        board UI: toolbar, canvas, pan/zoom, dragging, editing, shortcuts
   ViewModels/                 board state, selection, undo/redo (whole-board snapshots)
   Services/MiroCsvImporter.cs CSV parsing and auto-layout
-  Services/BoardFile.cs       .mlboard load/save (JSON)
+  Services/BoardFile.cs       .storyboard load/save (JSON)
   Controls/FitText.cs         sticky-note text that shrinks to fit
 Installer/
   Package.wxs                 what the MSI installs
