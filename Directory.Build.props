@@ -1,0 +1,13 @@
+<Project>
+  <!-- Shared by the app projects (not the WiX installer project). -->
+  <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.csproj'">
+    <!-- The app version. The Windows installer and the Android app both take it from here.
+         On Android also bump ApplicationVersion in StoryBoarder.Android.csproj for every Play Store upload. -->
+    <Version>2.0.0</Version>
+    <Product>Story Boarder</Product>
+    <AvaloniaVersion>12.1.6</AvaloniaVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+</Project>

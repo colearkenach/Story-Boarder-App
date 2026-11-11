@@ -52,3 +52,6 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+# Android signing keys: keep them out of the repository
+*.keystore
+*.jks

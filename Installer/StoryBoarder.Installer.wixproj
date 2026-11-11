@@ -14,7 +14,7 @@
 
   <!-- Publish the app as a single self-contained exe, then package that. -->
   <Target Name="PublishApp" BeforeTargets="BeforeBuild">
-    <Exec Command="dotnet publish &quot;$(MSBuildThisFileDirectory)..\StoryBoarder\StoryBoarder.csproj&quot; -p:PublishProfile=Installer -o &quot;$(AppPublishDir)&quot; -nologo" />
+    <Exec Command="dotnet publish &quot;$(MSBuildThisFileDirectory)..\StoryBoarder.Desktop\StoryBoarder.Desktop.csproj&quot; -p:PublishProfile=Installer -o &quot;$(AppPublishDir)&quot; -nologo" />
   </Target>
 
 </Project>

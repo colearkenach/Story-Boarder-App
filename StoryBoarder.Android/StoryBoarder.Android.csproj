@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The Android app for phones and tablets: hosts StoryBoarder.Core and shows AdMob banner ads. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
+    <RootNamespace>StoryBoarder.Android</RootNamespace>
+    <!-- Permanent once the app is on Google Play: change it before the first upload if you want a different one. -->
+    <ApplicationId>com.blackflamestudios.storyboarder</ApplicationId>
+    <ApplicationTitle>Story Boarder</ApplicationTitle>
+    <!-- Must go up by at least 1 for every upload to Google Play. -->
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>$(Version)</ApplicationDisplayVersion>
+    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+  </PropertyGroup>
+
+  <!-- With nothing else set up (JAVA_HOME, ANDROID_HOME, Visual Studio), use the JDK and Android SDK
+       that come with Android Studio. -->
+  <PropertyGroup>
+    <JavaSdkDirectory Condition="'$(JavaSdkDirectory)' == '' And '$(JAVA_HOME)' == '' And Exists('$(ProgramW6432)\Android\Android Studio\jbr')">$(ProgramW6432)\Android\Android Studio\jbr</JavaSdkDirectory>
+    <AndroidSdkDirectory Condition="'$(AndroidSdkDirectory)' == '' And '$(ANDROID_HOME)' == '' And Exists('$(LOCALAPPDATA)\Android\Sdk')">$(LOCALAPPDATA)\Android\Sdk</AndroidSdkDirectory>
+  </PropertyGroup>
+
+  <!-- Google Play takes an app bundle (.aab); debug builds stay .apk for installing on a device or emulator. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <AndroidPackageFormat>aab</AndroidPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Android" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Xamarin.GooglePlayServices.Ads" Version="125.5.0" />
+    <PackageReference Include="Xamarin.Google.UserMessagingPlatform" Version="4.0.0.4" />
+    <!-- The ads SDK needs AppCompat 1.8; Avalonia asks for 1.7, which 1.8 is compatible with. -->
+    <PackageReference Include="Xamarin.AndroidX.AppCompat" Version="1.8.0" />
+    <PackageReference Include="Xamarin.AndroidX.AppCompat.AppCompatResources" Version="1.8.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StoryBoarder.Core\StoryBoarder.Core.csproj" />
+  </ItemGroup>
+
+</Project>

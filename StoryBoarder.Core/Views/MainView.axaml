@@ -1,0 +1,607 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="using:StoryBoarder.Controls"
+             xmlns:m="using:StoryBoarder.Models"
+             xmlns:v="using:StoryBoarder.Views"
+             xmlns:vm="using:StoryBoarder.ViewModels"
+             x:Class="StoryBoarder.Views.MainView"
+             x:DataType="vm:BoardViewModel"
+             FontSize="13" Foreground="#1F2430" Background="White">
+    <UserControl.Resources>
+        <SolidColorBrush x:Key="AccentBrush" Color="#7048E8"/>
+        <SolidColorBrush x:Key="ChromeBorderBrush" Color="#E3E5EA"/>
+        <SolidColorBrush x:Key="MutedTextBrush" Color="#6B7180"/>
+        <SolidColorBrush x:Key="BoardBrush" Color="#F7F8FA"/>
+        <SolidColorBrush x:Key="ArrowBrush" Color="#5B6170"/>
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <!-- Flat toolbar buttons: an icon, plus a label that hides when the window is narrow. -->
+        <Style Selector="Button.tool, ToggleButton.tool">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#1F2430"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="Margin" Value="1,0"/>
+            <Setter Property="MinHeight" Value="34"/>
+            <Setter Property="MinWidth" Value="36"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.tool:pointerover /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.tool:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#EEF0F5"/>
+            <Setter Property="Foreground" Value="#1F2430"/>
+        </Style>
+        <Style Selector="Button.tool:pressed /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.tool:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#DFE3EC"/>
+        </Style>
+        <Style Selector="ToggleButton.tool:checked /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#E8E1FD"/>
+            <Setter Property="Foreground" Value="#5A35D6"/>
+        </Style>
+        <Style Selector="Button.tool:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.tool:disabled">
+            <Setter Property="Opacity" Value="0.35"/>
+        </Style>
+        <!-- Child selectors (">"), so these don't reach into menus that open from a button. -->
+        <Style Selector="Button.tool > StackPanel">
+            <Setter Property="Orientation" Value="Horizontal"/>
+            <Setter Property="Spacing" Value="6"/>
+        </Style>
+        <Style Selector="Button.tool > StackPanel > TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="18,9"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Focusable" Value="False"/>
+        </Style>
+        <Style Selector="Button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#6741D9"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="Button.secondary">
+            <Setter Property="Padding" Value="18,9"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Focusable" Value="False"/>
+        </Style>
+
+        <Style Selector="Rectangle.separator">
+            <Setter Property="Width" Value="1"/>
+            <Setter Property="Height" Value="22"/>
+            <Setter Property="Margin" Value="6,0"/>
+            <Setter Property="Fill" Value="{StaticResource ChromeBorderBrush}"/>
+        </Style>
+
+        <!-- Round color swatches. -->
+        <Style Selector="Button.swatch">
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Padding" Value="2"/>
+            <Setter Property="Margin" Value="1,0"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Focusable" Value="False"/>
+        </Style>
+        <Style Selector="Button.swatch:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#B8BDC9"/>
+        </Style>
+        <Style Selector="v|MainView.touch Button.swatch">
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="CornerRadius" Value="20"/>
+        </Style>
+        <Style Selector="v|MainView.touch Button.swatch Border">
+            <Setter Property="CornerRadius" Value="16"/>
+        </Style>
+
+        <!-- Text boxes used to edit notes, text and frame titles: no chrome of their own. -->
+        <Style Selector="TextBox.edit">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="Foreground" Value="#1F1F1F"/>
+            <Setter Property="CaretBrush" Value="#1F1F1F"/>
+            <Setter Property="SelectionBrush" Value="#667048E8"/>
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+        </Style>
+        <Style Selector="TextBox.edit:pointerover /template/ Border#PART_BorderElement, TextBox.edit:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <!-- Text items show a faint outline on hover, so you can see where they are. -->
+        <Style Selector="Panel.text Border.hover">
+            <Setter Property="IsVisible" Value="False"/>
+        </Style>
+        <Style Selector="Panel.text:pointerover Border.hover">
+            <Setter Property="IsVisible" Value="True"/>
+        </Style>
+
+        <Style Selector="Path.line.selected">
+            <Setter Property="Stroke" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="Fill" Value="{StaticResource AccentBrush}"/>
+        </Style>
+
+        <!-- Floating panels over the board: zoom controls, the touch selection bar, the phone search bar. -->
+        <Style Selector="Border.floating">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="4"/>
+            <Setter Property="BorderBrush" Value="{StaticResource ChromeBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BoxShadow" Value="0 2 8 0 #14000000"/>
+        </Style>
+
+        <!-- Which parts show where. Later rules win, so the phone (compact) rules come last.
+             Marker classes: "wide" = wide windows only, "narrow" = phones only, "touch-only" = touch screens only.
+             (The view itself carries "mobile", "touch" and "compact", so the markers use other names.) -->
+        <Style Selector=":is(Control).narrow, :is(Control).touch-only, :is(Control).mobile-only">
+            <Setter Property="IsVisible" Value="False"/>
+        </Style>
+        <Style Selector="v|MainView.mobile :is(Control).mobile-only">
+            <Setter Property="IsVisible" Value="True"/>
+        </Style>
+        <Style Selector="v|MainView.mobile :is(Control).desktop-only">
+            <Setter Property="IsVisible" Value="False"/>
+        </Style>
+        <!-- Touch screens: finger-sized swatches don't fit in the toolbar, so colors come from a flyout; and there's
+             a select-area button, since there's no Shift+drag. -->
+        <Style Selector="v|MainView.touch :is(Control).touch-only">
+            <Setter Property="IsVisible" Value="True"/>
+        </Style>
+        <Style Selector="v|MainView.touch ItemsControl#Swatches">
+            <Setter Property="IsVisible" Value="False"/>
+        </Style>
+        <!-- Phones: icons only, file actions in a menu, and the tools in a bar at the bottom. -->
+        <Style Selector="v|MainView.compact :is(Control).narrow">
+            <Setter Property="IsVisible" Value="True"/>
+        </Style>
+        <Style Selector="v|MainView.compact :is(Control).wide">
+            <Setter Property="IsVisible" Value="False"/>
+        </Style>
+        <!-- Bigger targets for fingers. -->
+        <Style Selector="v|MainView.touch Button.tool, v|MainView.touch ToggleButton.tool">
+            <Setter Property="MinHeight" Value="44"/>
+            <Setter Property="MinWidth" Value="44"/>
+        </Style>
+    </UserControl.Styles>
+
+    <UserControl.DataTemplates>
+        <DataTemplate DataType="vm:NoteViewModel">
+            <Panel Classes="item" Width="{Binding Width}" Height="{Binding Height}">
+                <Border Background="{Binding Color, Converter={x:Static c:Converters.HexBrush}}"
+                        BorderBrush="#14000000" BorderThickness="1" CornerRadius="3">
+                    <c:FitText Text="{Binding Text}" Margin="14" MaxFontSize="28" Foreground="#1F1F1F"
+                               IsVisible="{Binding !IsEditing}"/>
+                </Border>
+                <TextBox Classes="edit" IsVisible="{Binding IsEditing}" Text="{Binding Text}"
+                         Margin="1" Padding="10" FontSize="16" AcceptsReturn="True" TextWrapping="Wrap"
+                         TextAlignment="Center"/>
+            </Panel>
+        </DataTemplate>
+
+        <DataTemplate DataType="vm:TextViewModel">
+            <Panel Classes="item text" Width="{Binding Width}" Height="{Binding Height}" Background="Transparent">
+                <Border Classes="hover" BorderBrush="#B8BDC9" BorderThickness="1" IsHitTestVisible="False"/>
+                <c:FitText Text="{Binding Text}" Margin="4,0" MaxFontSize="200" Foreground="#1F2430"
+                           IsVisible="{Binding !IsEditing}"/>
+                <Border Background="White" BorderBrush="#B8BDC9" BorderThickness="1" IsVisible="{Binding IsEditing}">
+                    <TextBox Classes="edit" IsVisible="{Binding IsEditing}" Text="{Binding Text}" Padding="4"
+                             FontSize="16" AcceptsReturn="True" TextWrapping="Wrap" TextAlignment="Center"
+                             VerticalContentAlignment="Center"/>
+                </Border>
+            </Panel>
+        </DataTemplate>
+
+        <DataTemplate DataType="vm:ImageViewModel">
+            <Panel Classes="item" Width="{Binding Width}" Height="{Binding Height}" Background="Transparent">
+                <!-- Only shown if the picture couldn't be read. -->
+                <Border IsVisible="{Binding IsMissing}" Background="#EEF0F5" BorderBrush="#DADDE3" BorderThickness="1">
+                    <c:Icon Data="{StaticResource Icon.Image}" Width="32" Height="32" Foreground="#B8BDC9"/>
+                </Border>
+                <Image Source="{Binding Source}" Stretch="Fill" RenderOptions.BitmapInterpolationMode="HighQuality"/>
+            </Panel>
+        </DataTemplate>
+
+        <DataTemplate DataType="vm:FrameViewModel">
+            <Panel Width="{Binding Width}" Height="{Binding Height}">
+                <!-- Dragging the body moves the frame and everything in it. -->
+                <Border Classes="frame-body" Background="{Binding Color, Converter={x:Static c:Converters.HexBrush}}"
+                        BorderBrush="#DADDE3" BorderThickness="1"/>
+                <!-- The title sits above the frame and can be dragged too. It is scaled up to stay readable
+                     when zoomed out, so its max width shrinks by the same factor. -->
+                <Panel Classes="frame-title" VerticalAlignment="Top" HorizontalAlignment="Left" Height="26"
+                       Margin="0,-30,0,0" MinWidth="40" Background="Transparent" RenderTransformOrigin="0%,100%"
+                       RenderTransform="{Binding $parent[v:MainView].TitleTransform}">
+                    <Panel.MaxWidth>
+                        <MultiBinding Converter="{x:Static c:Converters.Divide}">
+                            <Binding Path="Width"/>
+                            <Binding Path="$parent[v:MainView].TitleScale"/>
+                        </MultiBinding>
+                    </Panel.MaxWidth>
+                    <TextBlock Text="{Binding Text}" FontSize="14" Foreground="{StaticResource MutedTextBrush}"
+                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="2,0"
+                               IsVisible="{Binding !IsEditing}"/>
+                    <Border Background="White" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1"
+                            MinWidth="180" IsVisible="{Binding IsEditing}">
+                        <TextBox Classes="edit" IsVisible="{Binding IsEditing}" Text="{Binding Text}" FontSize="14"
+                                 Padding="2,0" TextWrapping="NoWrap" VerticalContentAlignment="Center"/>
+                    </Border>
+                </Panel>
+            </Panel>
+        </DataTemplate>
+
+        <DataTemplate DataType="vm:ConnectorViewModel">
+            <Panel Classes="connector">
+                <!-- A wide invisible line under the arrow makes it easy to click. -->
+                <Path Data="{Binding Geometry}" Stroke="Transparent" StrokeThickness="{Binding HitThickness}"/>
+                <Path Classes="line" Classes.selected="{Binding IsSelected}" Data="{Binding Geometry}"
+                      Stroke="{StaticResource ArrowBrush}" Fill="{StaticResource ArrowBrush}"
+                      StrokeThickness="{Binding Thickness}" StrokeJoin="Round" StrokeLineCap="Round"
+                      IsHitTestVisible="False"/>
+            </Panel>
+        </DataTemplate>
+    </UserControl.DataTemplates>
+
+    <Panel>
+        <DockPanel>
+            <!-- Toolbar -->
+            <Border DockPanel.Dock="Top" Background="White" BorderBrush="{StaticResource ChromeBorderBrush}"
+                    BorderThickness="0,0,0,1" Padding="8,6">
+                <DockPanel>
+                    <!-- Search: a box on wide screens, a button that opens a bar over the board on narrow ones. -->
+                    <Border DockPanel.Dock="Right" Classes="wide" Width="170" Height="32" CornerRadius="6"
+                            Background="#F1F3F7" Margin="6,0,2,0">
+                        <Panel>
+                            <c:Icon Data="{StaticResource Icon.Search}" Width="15" Height="15"
+                                    Foreground="{StaticResource MutedTextBrush}" Margin="10,0,0,0"
+                                    HorizontalAlignment="Left" IsHitTestVisible="False"/>
+                            <TextBox x:Name="SearchBox" Classes="edit search" Margin="28,0,54,0" FontSize="13"
+                                     PlaceholderText="Search" VerticalContentAlignment="Center"
+                                     ToolTip.Tip="Search the board (Ctrl+F) · Enter: next match · Shift+Enter: previous · Esc: clear"/>
+                            <TextBlock x:Name="SearchCount" Foreground="{StaticResource MutedTextBrush}" FontSize="12"
+                                       HorizontalAlignment="Right" Margin="0,0,10,0" VerticalAlignment="Center"
+                                       IsHitTestVisible="False"/>
+                        </Panel>
+                    </Border>
+                    <Button DockPanel.Dock="Right" Classes="tool narrow" Click="SearchToggle_Click" ToolTip.Tip="Search">
+                        <c:Icon Data="{StaticResource Icon.Search}"/>
+                    </Button>
+                    <Button DockPanel.Dock="Right" Classes="tool" Click="Frames_Click" ToolTip.Tip="Jump to a frame">
+                        <StackPanel>
+                            <c:Icon Data="{StaticResource Icon.Frames}"/>
+                            <TextBlock Classes="wide" Text="Frames"/>
+                            <c:Icon Classes="wide" Data="{StaticResource Icon.ChevronDown}" Width="12" Height="12" Margin="-3,0,0,0"/>
+                        </StackPanel>
+                    </Button>
+
+                    <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Classes="tool narrow" Click="FileMenu_Click" ToolTip.Tip="File">
+                                <c:Icon Data="{StaticResource Icon.Menu}"/>
+                            </Button>
+                            <!-- Phones and tablets have no title bar, so the board's name shows here. -->
+                            <TextBlock x:Name="DocTitle" Classes="mobile-only" VerticalAlignment="Center" FontWeight="SemiBold"
+                                       Margin="6,0,8,0" MaxWidth="180" TextTrimming="CharacterEllipsis"/>
+
+                            <Button Classes="tool wide" Click="New_Click" ToolTip.Tip="New board (Ctrl+N)">
+                                <StackPanel><c:Icon Data="{StaticResource Icon.New}"/><TextBlock Text="New"/></StackPanel>
+                            </Button>
+                            <Button Classes="tool wide" Click="Open_Click" ToolTip.Tip="Open a board (Ctrl+O)">
+                                <StackPanel><c:Icon Data="{StaticResource Icon.Open}"/><TextBlock Text="Open"/></StackPanel>
+                            </Button>
+                            <Button Classes="tool wide" Click="Save_Click" ToolTip.Tip="Save (Ctrl+S) · Save as (Ctrl+Shift+S)">
+                                <StackPanel><c:Icon Data="{StaticResource Icon.Save}"/><TextBlock Text="Save"/></StackPanel>
+                            </Button>
+                            <Button Classes="tool wide" Click="ImportCsv_Click"
+                                    ToolTip.Tip="Import a board exported from Miro as CSV (Ctrl+I) · or drop a .csv on the window">
+                                <StackPanel><c:Icon Data="{StaticResource Icon.Import}"/><TextBlock Text="Import CSV"/></StackPanel>
+                            </Button>
+                            <Button Classes="tool wide" Click="Export_Click"
+                                    ToolTip.Tip="Export the board, or just the selection, as a PNG picture (Ctrl+E)">
+                                <StackPanel><c:Icon Data="{StaticResource Icon.Export}"/><TextBlock Text="Export"/></StackPanel>
+                            </Button>
+                            <Rectangle Classes="separator wide"/>
+
+                            <Button Classes="tool" Click="Undo_Click" IsEnabled="{Binding CanUndo}" ToolTip.Tip="Undo (Ctrl+Z)">
+                                <c:Icon Data="{StaticResource Icon.Undo}"/>
+                            </Button>
+                            <Button Classes="tool" Click="Redo_Click" IsEnabled="{Binding CanRedo}" ToolTip.Tip="Redo (Ctrl+Y)">
+                                <c:Icon Data="{StaticResource Icon.Redo}"/>
+                            </Button>
+                            <Rectangle Classes="separator wide"/>
+
+                            <!-- Adding things. On phones these move to the bar at the bottom of the board. -->
+                            <Button Classes="tool wide" Click="AddNote_Click" ToolTip.Tip="Add a sticky note (N, or double-click the board)">
+                                <StackPanel>
+                                    <c:Icon Data="{StaticResource Icon.Note}"/>
+                                    <TextBlock Text="Sticky note"/>
+                                    <Border x:Name="NoteColorChip" Width="12" Height="12" CornerRadius="3"
+                                            BorderBrush="#33000000" BorderThickness="1" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Classes="tool wide" Click="AddText_Click" ToolTip.Tip="Add text (T)">
+                                <StackPanel><c:Icon Data="{StaticResource Icon.Text}"/><TextBlock Text="Text"/></StackPanel>
+                            </Button>
+                            <Button Classes="tool wide" Click="AddFrame_Click" ToolTip.Tip="Add a frame (F)">
+                                <StackPanel><c:Icon Data="{StaticResource Icon.Frame}"/><TextBlock Text="Frame"/></StackPanel>
+                            </Button>
+                            <Button Classes="tool wide" Click="AddImage_Click"
+                                    ToolTip.Tip="Add pictures · or paste one (Ctrl+V), or drop picture files on the board">
+                                <StackPanel><c:Icon Data="{StaticResource Icon.Image}"/><TextBlock Text="Image"/></StackPanel>
+                            </Button>
+                            <Rectangle Classes="separator wide"/>
+
+                            <ItemsControl x:Name="Swatches" Classes="wide" ItemsSource="{x:Static m:Palette.Notes}"
+                                          VerticalAlignment="Center">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="m:PaletteColor">
+                                        <Button Classes="swatch" ToolTip.Tip="{Binding Name}">
+                                            <Border CornerRadius="9" Background="{Binding Hex, Converter={x:Static c:Converters.HexBrush}}"
+                                                    BorderBrush="#26000000" BorderThickness="1"/>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <Button x:Name="ToolbarColorButton" Classes="tool wide touch-only" ToolTip.Tip="Note color">
+                                <c:Icon Data="{StaticResource Icon.Color}"/>
+                                <Button.Flyout>
+                                    <Flyout Placement="BottomEdgeAlignedLeft">
+                                        <ItemsControl x:Name="ToolbarSwatches" ItemsSource="{x:Static m:Palette.Notes}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate><WrapPanel MaxWidth="200"/></ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="m:PaletteColor">
+                                                    <Button Classes="swatch" Margin="2">
+                                                        <Border CornerRadius="9" Background="{Binding Hex, Converter={x:Static c:Converters.HexBrush}}"
+                                                                BorderBrush="#26000000" BorderThickness="1"/>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
+                            <ToggleButton x:Name="SelectAreaToggle" Classes="tool wide touch-only"
+                                          ToolTip.Tip="Select an area: drag across the board (or Shift+drag)">
+                                <c:Icon Data="{StaticResource Icon.SelectArea}"/>
+                            </ToggleButton>
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+            <!-- Ad banner (Android only; the slot stays empty elsewhere). -->
+            <ContentControl x:Name="AdSlot" DockPanel.Dock="Bottom" IsVisible="False" HorizontalAlignment="Stretch"/>
+
+            <!-- Status bar -->
+            <Border DockPanel.Dock="Bottom" Classes="wide desktop-only" Background="White"
+                    BorderBrush="{StaticResource ChromeBorderBrush}" BorderThickness="0,1,0,0" Padding="12,5">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Right" Foreground="{StaticResource MutedTextBrush}"
+                               Text="{Binding Items.Count, StringFormat='{}{0} items'}"/>
+                    <TextBlock x:Name="HintText" Foreground="{StaticResource MutedTextBrush}" TextTrimming="CharacterEllipsis"/>
+                </DockPanel>
+            </Border>
+
+            <Panel>
+                <!-- The board. BoardItems and Overlay are in board coordinates; the view transform pans and zooms them. -->
+                <Panel x:Name="Viewport" Background="{StaticResource BoardBrush}" ClipToBounds="True" Focusable="True">
+                    <Rectangle x:Name="GridLayer" IsHitTestVisible="False">
+                        <Rectangle.Fill>
+                            <DrawingBrush TileMode="Tile" DestinationRect="0,0,24,24" SourceRect="0,0,24,24"
+                                          Stretch="None" TransformOrigin="0,0">
+                                <DrawingBrush.Drawing>
+                                    <DrawingGroup>
+                                        <GeometryDrawing Brush="Transparent">
+                                            <GeometryDrawing.Geometry>
+                                                <RectangleGeometry Rect="0,0,24,24"/>
+                                            </GeometryDrawing.Geometry>
+                                        </GeometryDrawing>
+                                        <GeometryDrawing Brush="#CDD1DA">
+                                            <GeometryDrawing.Geometry>
+                                                <EllipseGeometry Center="12,12" RadiusX="1.3" RadiusY="1.3"/>
+                                            </GeometryDrawing.Geometry>
+                                        </GeometryDrawing>
+                                    </DrawingGroup>
+                                </DrawingBrush.Drawing>
+                            </DrawingBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+
+                    <!-- Items and arrows. Frames sit at the bottom, then arrows, then notes, text and pictures,
+                         so an arrow passes under notes instead of across their text (see ZIndex). -->
+                    <Panel x:Name="BoardLayer">
+                        <ItemsControl x:Name="BoardItems" ItemsSource="{Binding Elements}" RenderTransformOrigin="0,0"
+                                      ClipToBounds="False">
+                            <!-- No clipping anywhere: the board extends past the view in every direction. -->
+                            <ItemsControl.Template>
+                                <ControlTemplate>
+                                    <ItemsPresenter ItemsPanel="{TemplateBinding ItemsPanel}" ClipToBounds="False"/>
+                                </ControlTemplate>
+                            </ItemsControl.Template>
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><Canvas ClipToBounds="False"/></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemContainerTheme>
+                                <ControlTheme TargetType="ContentPresenter" x:DataType="vm:BoardElementViewModel">
+                                    <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                    <Setter Property="Canvas.Top" Value="{Binding Y}"/>
+                                    <Setter Property="ZIndex" Value="{Binding ZIndex}"/>
+                                </ControlTheme>
+                            </ItemsControl.ItemContainerTheme>
+                        </ItemsControl>
+                    </Panel>
+
+                    <Canvas x:Name="Overlay" IsHitTestVisible="False" RenderTransformOrigin="0,0">
+                        <Path x:Name="ConnectPreview" Stroke="{StaticResource AccentBrush}" Fill="{StaticResource AccentBrush}"
+                              StrokeJoin="Round" StrokeLineCap="Round" Opacity="0.8" IsVisible="False"/>
+                    </Canvas>
+
+                    <c:SelectionAdorner x:Name="Adorner" IsHitTestVisible="False"/>
+                </Panel>
+
+                <!-- Shown while the board is empty. -->
+                <Border HorizontalAlignment="Center" VerticalAlignment="Center" Background="White" CornerRadius="12"
+                        Padding="36,28" Margin="16" BorderBrush="{StaticResource ChromeBorderBrush}" BorderThickness="1"
+                        IsVisible="{Binding IsEmpty}">
+                    <StackPanel>
+                        <TextBlock Text="Your board is empty" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="EmptyHint" Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap"
+                                   TextAlignment="Center" MaxWidth="320" Margin="0,8,0,18"/>
+                        <Button Classes="primary" Content="Import CSV…" Click="ImportCsv_Click" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Search bar for narrow screens. -->
+                <Border x:Name="CompactSearch" Classes="floating" IsVisible="False" VerticalAlignment="Top"
+                        Margin="8" Padding="8,4">
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Classes="tool" Click="SearchToggle_Click" ToolTip.Tip="Close search">
+                            <c:Icon Data="{StaticResource Icon.Close}"/>
+                        </Button>
+                        <TextBlock x:Name="CompactSearchCount" DockPanel.Dock="Right" Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="12" VerticalAlignment="Center" Margin="6,0"/>
+                        <c:Icon DockPanel.Dock="Left" Data="{StaticResource Icon.Search}" Width="16" Height="16"
+                                Foreground="{StaticResource MutedTextBrush}" Margin="4,0,6,0"/>
+                        <TextBox x:Name="CompactSearchBox" Classes="edit search" PlaceholderText="Search the board"
+                                 VerticalContentAlignment="Center" FontSize="15"/>
+                    </DockPanel>
+                </Border>
+
+                <!-- Tools bar for phones: adding things, color, area selection, zoom to fit. -->
+                <Border x:Name="CompactTools" Classes="floating narrow" HorizontalAlignment="Center"
+                        VerticalAlignment="Bottom" Margin="8">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Classes="tool" Click="AddNote_Click" ToolTip.Tip="Add a sticky note">
+                            <StackPanel>
+                                <c:Icon Data="{StaticResource Icon.Note}"/>
+                                <Border x:Name="CompactNoteColorChip" Width="12" Height="12" CornerRadius="3"
+                                        BorderBrush="#33000000" BorderThickness="1" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Classes="tool" Click="AddText_Click" ToolTip.Tip="Add text">
+                            <c:Icon Data="{StaticResource Icon.Text}"/>
+                        </Button>
+                        <Button Classes="tool" Click="AddFrame_Click" ToolTip.Tip="Add a frame">
+                            <c:Icon Data="{StaticResource Icon.Frame}"/>
+                        </Button>
+                        <Button Classes="tool" Click="AddImage_Click" ToolTip.Tip="Add pictures">
+                            <c:Icon Data="{StaticResource Icon.Image}"/>
+                        </Button>
+                        <Button x:Name="CompactColorButton" Classes="tool" ToolTip.Tip="Note color">
+                            <c:Icon Data="{StaticResource Icon.Color}"/>
+                            <Button.Flyout>
+                                <Flyout Placement="Top">
+                                    <ItemsControl x:Name="CompactSwatches" ItemsSource="{x:Static m:Palette.Notes}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate><WrapPanel MaxWidth="200"/></ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="m:PaletteColor">
+                                                <Button Classes="swatch" Margin="2">
+                                                    <Border CornerRadius="9" Background="{Binding Hex, Converter={x:Static c:Converters.HexBrush}}"
+                                                            BorderBrush="#26000000" BorderThickness="1"/>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
+                        <ToggleButton Classes="tool" IsChecked="{Binding #SelectAreaToggle.IsChecked, Mode=TwoWay}"
+                                      ToolTip.Tip="Select an area: drag across the board">
+                            <c:Icon Data="{StaticResource Icon.SelectArea}"/>
+                        </ToggleButton>
+                        <Button Classes="tool" Click="ZoomFit_Click" ToolTip.Tip="Zoom to fit">
+                            <c:Icon Data="{StaticResource Icon.Fit}"/>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <!-- Actions for the selection, on touch screens (with a mouse they're on the right-click menu). -->
+                <Border x:Name="SelectionBar" Classes="floating" IsVisible="False" HorizontalAlignment="Center"
+                        VerticalAlignment="Bottom" Margin="8,8,8,72">
+                    <StackPanel Orientation="Horizontal">
+                        <Button x:Name="SelectionEdit" Classes="tool" Click="MenuEdit_Click" ToolTip.Tip="Edit text">
+                            <c:Icon Data="{StaticResource Icon.Edit}"/>
+                        </Button>
+                        <Button x:Name="SelectionColorButton" Classes="tool" ToolTip.Tip="Color">
+                            <c:Icon Data="{StaticResource Icon.Color}"/>
+                            <Button.Flyout>
+                                <Flyout Placement="Top">
+                                    <ItemsControl x:Name="SelectionSwatches" ItemsSource="{x:Static m:Palette.Notes}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate><WrapPanel MaxWidth="200"/></ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="m:PaletteColor">
+                                                <Button Classes="swatch" Margin="2">
+                                                    <Border CornerRadius="9" Background="{Binding Hex, Converter={x:Static c:Converters.HexBrush}}"
+                                                            BorderBrush="#26000000" BorderThickness="1"/>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
+                        <Button Classes="tool" Click="MenuDuplicate_Click" ToolTip.Tip="Duplicate">
+                            <c:Icon Data="{StaticResource Icon.Duplicate}"/>
+                        </Button>
+                        <Button Classes="tool" Click="MenuDelete_Click" ToolTip.Tip="Delete">
+                            <c:Icon Data="{StaticResource Icon.Delete}"/>
+                        </Button>
+                        <Button Classes="tool" Click="SelectionMore_Click" ToolTip.Tip="More">
+                            <c:Icon Data="{StaticResource Icon.More}" StrokeWidth="3"/>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <!-- Zoom controls (phones pinch, and have zoom to fit in the tools bar) -->
+                <Border Classes="floating wide" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="16">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Classes="tool" Click="ZoomOut_Click" ToolTip.Tip="Zoom out (Ctrl+-)">
+                            <c:Icon Data="{StaticResource Icon.Minus}"/>
+                        </Button>
+                        <TextBlock x:Name="ZoomText" Width="46" TextAlignment="Center" VerticalAlignment="Center"/>
+                        <Button Classes="tool" Click="ZoomIn_Click" ToolTip.Tip="Zoom in (Ctrl+=)">
+                            <c:Icon Data="{StaticResource Icon.Plus}"/>
+                        </Button>
+                        <Button Classes="tool" Click="ZoomFit_Click" ToolTip.Tip="Zoom to fit (Ctrl+0)">
+                            <c:Icon Data="{StaticResource Icon.Fit}"/>
+                        </Button>
+                    </StackPanel>
+                </Border>
+            </Panel>
+        </DockPanel>
+
+        <!-- Message boxes (Avalonia has none built in, and they need to work on phones too). -->
+        <Panel x:Name="DialogLayer" IsVisible="False" Background="#59000000">
+            <Border HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="440" Margin="24"
+                    Padding="24,20" Background="White" CornerRadius="12" BoxShadow="0 8 32 0 #33000000">
+                <StackPanel Spacing="18">
+                    <TextBlock x:Name="DialogText" TextWrapping="Wrap" FontSize="14"/>
+                    <WrapPanel x:Name="DialogButtons" HorizontalAlignment="Right"/>
+                </StackPanel>
+            </Border>
+        </Panel>
+    </Panel>
+</UserControl>

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The Windows app (also runs on macOS and Linux). Everything else lives in StoryBoarder.Core. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- The exe keeps its old name, so the installer, shortcuts and file association don't change. -->
+    <AssemblyName>StoryBoarder</AssemblyName>
+    <RootNamespace>StoryBoarder.Desktop</RootNamespace>
+    <ApplicationIcon>..\StoryBoarder.Core\Assets\StoryBoarder.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyTitle>Story Boarder</AssemblyTitle>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StoryBoarder.Core\StoryBoarder.Core.csproj" />
+  </ItemGroup>
+
+</Project>
