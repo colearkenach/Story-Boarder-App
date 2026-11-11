@@ -48,7 +48,7 @@ public partial class MainView : UserControl
         MimeTypes = ["application/octet-stream"],
     };
 
-    private static readonly FilePickerFileType CsvFiles = new("Miro CSV export")
+    private static readonly FilePickerFileType CsvFiles = new("CSV export")
     {
         Patterns = ["*.csv"],
         MimeTypes = ["text/csv", "text/comma-separated-values", "application/csv", "text/plain", "*/*"],
@@ -251,7 +251,7 @@ public partial class MainView : UserControl
         menu.Items.Add(MenuEntry("Save", () => _ = SaveAsync(saveAs: false), "Ctrl+S"));
         menu.Items.Add(MenuEntry("Save as…", () => _ = SaveAsync(saveAs: true), "Ctrl+Shift+S"));
         menu.Items.Add(new Separator());
-        menu.Items.Add(MenuEntry("Import Miro CSV…", () => _ = OpenWithPickerAsync(csv: true), "Ctrl+I"));
+        menu.Items.Add(MenuEntry("Import CSV…", () => _ = OpenWithPickerAsync(csv: true), "Ctrl+I"));
         menu.Items.Add(MenuEntry("Export as PNG…", () => _ = ExportPngAsync(), "Ctrl+E"));
         if (PrivacyOptions is { } privacy)
         {
@@ -274,7 +274,7 @@ public partial class MainView : UserControl
         if (!await ConfirmDiscardChangesAsync() || Top?.StorageProvider is not { CanOpen: true } storage) return;
         var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = csv ? "Import a Miro CSV export" : "Open a board",
+            Title = csv ? "Import a CSV export" : "Open a board",
             FileTypeFilter = [csv ? CsvFiles : BoardFiles, FilePickerFileTypes.All],
         });
         if (files.Count > 0) await OpenFileAsync(files[0]);
@@ -912,8 +912,8 @@ public partial class MainView : UserControl
             ? "Drag to move notes or the board  ·  Pinch to zoom  ·  Double-tap: new note or edit  ·  Long-press: more"
             : "Drag frames and notes to move them  ·  Drag empty space, Space+drag or middle-drag: pan  ·  Shift+drag: select  ·  Scroll: zoom  ·  Drag a selected note's dots: draw an arrow  ·  Right-click: more";
         EmptyHint.Text = touch
-            ? "Import a CSV exported from Miro, or double-tap anywhere to add a sticky note."
-            : "Import a CSV exported from Miro, drop a .csv file here, or double-click anywhere to add a sticky note.";
+            ? "Import a whiteboard exported as CSV, or double-tap anywhere to add a sticky note."
+            : "Import a whiteboard exported as CSV, drop a .csv file here, or double-click anywhere to add a sticky note.";
         UpdateSelectionBar();
     }
 

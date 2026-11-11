@@ -13,11 +13,24 @@ namespace StoryBoarder.Android;
 internal static class Ads
 {
     /// <summary>
-    /// Google's sample adaptive-banner unit, which only serves test ads. Replace it with your own banner unit ID
-    /// from the AdMob console before publishing (and the app ID in AndroidManifest.xml). Never click real ads
-    /// on your own app while testing: AdMob can suspend the account for it.
+    /// The banner ad unit (an ID with a "/"; the app ID with a "~" goes in AndroidManifest.xml). Debug builds use
+    /// Google's sample unit, which only serves test ads, so testing on your own phone never loads or clicks real
+    /// ads (AdMob can suspend an account for that). Release builds, the ones uploaded to Google Play, use yours.
     /// </summary>
+#if DEBUG
     public const string BannerUnitId = "ca-app-pub-3940256099942544/9214589741";
+#else
+    public const string BannerUnitId = "ca-app-pub-5545029026903875/5031662256";
+#endif
+
+    /// <summary>
+    /// Your own phones and tablets, which always get test ads, even in Release builds with the real ad unit.
+    /// To add one, run the app on it and look in the device log for "setTestDeviceIds(Arrays.asList("…"))".
+    /// </summary>
+    private static readonly string[] TestDeviceIds =
+    [
+        "AFE3D92A56E62581A4ECF2CC6C73043F", // Pixel Fold
+    ];
 
     private static readonly List<WeakReference<AdBanner>> Banners = new();
     private static IConsentInformation? _consent;
@@ -53,6 +66,7 @@ internal static class Ads
     {
         if (_started) return;
         _started = true;
+        MobileAds.RequestConfiguration = new RequestConfiguration.Builder().SetTestDeviceIds(TestDeviceIds).Build();
         // Google recommends initializing off the main thread; ads can be requested straight away.
         var context = activity.ApplicationContext!;
         Task.Run(() => MobileAds.Initialize(context));

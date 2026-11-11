@@ -2,7 +2,7 @@
 
 A small whiteboard for planning stories on Windows and Android phones and tablets (C# / .NET 10 /
 [Avalonia](https://avaloniaui.net/)): sticky notes, frames, text, pictures and arrows on an infinite, zoomable board,
-with an importer for Miro's **Export to CSV** files. The Android app shows a banner ad (AdMob); the Windows app has no ads.
+with an importer for whiteboards exported as CSV. The Android app shows a banner ad (AdMob); the Windows app has no ads.
 
 ## Run it
 
@@ -28,19 +28,19 @@ dotnet build StoryBoarder.Android -t:Run
   `dotnet build StoryBoarder.Android -t:InstallAndroidDependencies -p:AcceptAndroidSdkLicenses=True` fetches
   anything missing.
 
-## Importing a Miro CSV
+## Importing a CSV export
 
-Click **Import CSV** (Ctrl+I), or drop a `.csv` onto the window. Miro's export has one text item
-per row with a blank row between frames, so the importer:
+Click **Import CSV** (Ctrl+I), or drop a `.csv` onto the window. The importer reads whiteboard exports that
+have one text item per row with a blank row between frames, and:
 
 - turns each block of rows into a **frame**, titled with the block's first row;
 - lays the remaining rows out as **sticky notes** in a grid inside the frame, sized to their text;
 - colors notes that share a label (e.g. every `Class: …`, `Power: …`, `Manifest: …`) so related notes stand out;
-- restores bullet lists Miro flattened (`- one - two` → one bullet per line) and fixes `&amp;`-style entities.
+- restores bullet lists the export flattened (`- one - two` → one bullet per line) and fixes `&amp;`-style entities.
 
 The CSV doesn't carry positions, colors or connectors, so the layout is generated. Rearrange things
 and **Save** to keep your layout as a `.storyboard` file (plain JSON; pictures are stored inside it).
-Boards saved as `.mlboard` (from when the app was called Miro Lite) still open.
+Boards saved as `.mlboard` (the app's older file extension) still open.
 
 On Android, the open board is also kept in the app's private storage whenever the app goes into the background, so
 nothing is lost if Android closes it; it reopens where you left off, still linked to the file it came from.
@@ -88,16 +88,19 @@ The Android app shows an [AdMob](https://admob.google.com/) adaptive banner unde
 asks for consent where the law requires it (EEA, UK, Switzerland) with Google's consent form (UMP); those users can
 change their choice later from ☰ → **Ad privacy choices**. The banner takes no space until an ad has loaded.
 
-The project ships with **Google's sample IDs, which only show test ads**. Before publishing:
+There are two IDs, and they go in different places:
 
-1. Create the app in AdMob and a **banner** ad unit.
-2. Put the app ID in `StoryBoarder.Android/Properties/AndroidManifest.xml` (`com.google.android.gms.ads.APPLICATION_ID`)
-   and the ad unit ID in `StoryBoarder.Android/Ads.cs` (`BannerUnitId`).
-3. In AdMob, set up the GDPR message under **Privacy & messaging** (the consent form shows what you configure there).
-4. Publish an `app-ads.txt` on your developer website (the one in your Play Store listing).
+| ID | Looks like | Where it goes |
+| --- | --- | --- |
+| App ID | `ca-app-pub-…~…` (with a `~`) | `StoryBoarder.Android/Properties/AndroidManifest.xml` (`com.google.android.gms.ads.APPLICATION_ID`) |
+| Banner ad unit ID | `ca-app-pub-…/…` (with a `/`) | `StoryBoarder.Android/Ads.cs` (`BannerUnitId`, in the Release branch) |
 
-Never tap real ads in your own app while testing; AdMob can suspend the account for it. Use the sample IDs, or add
-your phone as a test device in AdMob.
+Debug builds always use Google's sample banner unit, which only shows test ads, so testing on your own phone can't
+load or click real ads (AdMob can suspend an account for that). Release builds, the ones uploaded to Google Play, use
+your banner unit. Your app ID is used by both. Still to do in AdMob:
+
+1. In AdMob, set up the GDPR message under **Privacy & messaging** (the consent form shows what you configure there).
+2. Publish an `app-ads.txt` on your developer website (the one in your Play Store listing).
 
 ## Publishing on Google Play
 
@@ -139,7 +142,7 @@ packages it with [WiX Toolset v5](https://wixtoolset.org/) into
 - adds Start Menu and desktop shortcuts;
 - makes `.storyboard` files open in Story Boarder when double-clicked;
 - shows up in Settings → Apps, where it can be uninstalled;
-- replaces an earlier Story Boarder or Miro Lite install, if there is one.
+- replaces an earlier install, including one from before the app was renamed.
 
 To ship an update, bump `<Version>` in `Directory.Build.props` and rebuild; installing the new MSI
 replaces the old version. The MSI isn't code-signed, so Windows SmartScreen will warn on first run

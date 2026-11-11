@@ -307,7 +307,7 @@
                                 <StackPanel><c:Icon Data="{StaticResource Icon.Save}"/><TextBlock Text="Save"/></StackPanel>
                             </Button>
                             <Button Classes="tool wide" Click="ImportCsv_Click"
-                                    ToolTip.Tip="Import a board exported from Miro as CSV (Ctrl+I) · or drop a .csv on the window">
+                                    ToolTip.Tip="Import a board exported as CSV (Ctrl+I) · or drop a .csv on the window">
                                 <StackPanel><c:Icon Data="{StaticResource Icon.Import}"/><TextBlock Text="Import CSV"/></StackPanel>
                             </Button>
                             <Button Classes="tool wide" Click="Export_Click"

@@ -6,9 +6,10 @@
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
     <application android:label="Story Boarder" android:icon="@mipmap/ic_launcher" android:supportsRtl="true">
-        <!-- AdMob app ID. This is Google's sample ID, which only serves test ads:
-             replace it with your own from the AdMob console before publishing (see README). -->
+        <!-- AdMob app ID: the one with a "~" (AdMob → Apps → Story Boarder → App settings → App ID).
+             Not the ad unit ID with a "/", which goes in Ads.cs. Without a valid app ID here the app crashes
+             on launch. -->
         <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID"
-                   android:value="ca-app-pub-3940256099942544~3347511713" />
+                   android:value="ca-app-pub-5545029026903875~3008134147" />
     </application>
 </manifest>
