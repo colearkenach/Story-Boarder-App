@@ -36,8 +36,10 @@ internal static class Ads
     private static IConsentInformation? _consent;
     private static bool _started;
 
+    /// <summary>Asks for consent if needed, then starts ads. Only for users without Premium; safe to call again.</summary>
     public static void Start(Activity activity)
     {
+        if (_consent is not null) return;
         _consent = UserMessagingPlatform.GetConsentInformation(activity);
         var parameters = new ConsentRequestParameters.Builder().Build();
         _consent.RequestConsentInfoUpdate(activity, parameters,

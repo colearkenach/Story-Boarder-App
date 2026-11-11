@@ -23,13 +23,22 @@ public class MainActivity : AvaloniaMainActivity
     {
         Current = this;
         base.OnCreate(savedInstanceState);
-        Ads.Start(this);
+        // Premium users get no ads, so no consent form either. If Premium goes away (a refund), ads start then.
+        Billing.Instance.Changed += StartAdsUnlessPremium;
+        StartAdsUnlessPremium();
+    }
+
+    private void StartAdsUnlessPremium()
+    {
+        if (!Billing.Instance.IsPremium && Current == this) Ads.Start(this);
     }
 
     protected override void OnResume()
     {
         base.OnResume();
         Ads.Resume();
+        // Picks up purchases finished elsewhere (e.g. a pending payment that went through) and refunds.
+        _ = Billing.Instance.RefreshAsync();
     }
 
     protected override void OnPause()
@@ -40,6 +49,7 @@ public class MainActivity : AvaloniaMainActivity
 
     protected override void OnDestroy()
     {
+        Billing.Instance.Changed -= StartAdsUnlessPremium;
         if (Current == this) Current = null;
         base.OnDestroy();
     }

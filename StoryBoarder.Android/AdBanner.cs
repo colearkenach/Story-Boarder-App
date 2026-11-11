@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Android;
 using Avalonia.Controls;
 using Avalonia.Layout;
@@ -37,11 +38,13 @@ internal sealed class AdBanner : NativeControlHost
         return new AndroidViewControlHandle(_adView);
     }
 
-    protected override void DestroyNativeControlCore(IPlatformHandle control)
+    // Destroy the ad view as soon as the banner leaves the screen (e.g. the user just bought Premium): by the time
+    // Avalonia calls DestroyNativeControlCore it has already released the view, and it can't be destroyed then.
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         _adView?.Destroy();
         _adView = null;
-        base.DestroyNativeControlCore(control);
+        base.OnDetachedFromVisualTree(e);
     }
 
     public void Load()

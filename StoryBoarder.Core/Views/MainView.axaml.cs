@@ -89,6 +89,11 @@ public partial class MainView : UserControl
     /// <summary>Set by the Android app when the user can change their ad privacy choices (shown in the File menu).</summary>
     public static Action? PrivacyOptions { get; set; }
 
+    /// <summary>Set by the Android app: the one-time purchase that removes ads ("Remove ads" in the File menu).</summary>
+    public static IPremiumStore? Store { get; set; }
+
+    private bool HasPremium => Store?.IsPremium == true;
+
     private readonly BoardViewModel _board = new();
     private readonly bool _isMobile = OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
     private readonly DispatcherTimer _holdTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
@@ -208,15 +213,22 @@ public partial class MainView : UserControl
         if (Application.Current?.TryGetFeature(typeof(IActivatableLifetime)) is IActivatableLifetime lifetime)
             lifetime.Deactivated += OnAppDeactivated;
 
+        if (Store is { } store) store.Changed += UpdateAdSlot;
+        UpdateAdSlot();
+
         if (_started) return;
         _started = true;
         Dispatcher.UIThread.Post(() => Viewport.Focus(), DispatcherPriority.Loaded);
-        if (AdBannerFactory is { } createBanner)
-        {
-            AdSlot.Content = createBanner();
-            AdSlot.IsVisible = true;
-        }
         if (_isMobile) _ = RestoreSessionAsync();
+    }
+
+    // The ad banner, unless the user has Premium. Removing it destroys the native ad view.
+    private void UpdateAdSlot()
+    {
+        var showAds = AdBannerFactory is not null && !HasPremium;
+        if (showAds && AdSlot.Content is null) AdSlot.Content = AdBannerFactory!();
+        else if (!showAds) AdSlot.Content = null;
+        AdSlot.IsVisible = AdSlot.Content is not null;
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
@@ -232,6 +244,7 @@ public partial class MainView : UserControl
         }
         if (Application.Current?.TryGetFeature(typeof(IActivatableLifetime)) is IActivatableLifetime lifetime)
             lifetime.Deactivated -= OnAppDeactivated;
+        if (Store is { } store) store.Changed -= UpdateAdSlot;
         if (Current == this) Current = null;
     }
 
@@ -253,12 +266,30 @@ public partial class MainView : UserControl
         menu.Items.Add(new Separator());
         menu.Items.Add(MenuEntry("Import CSV…", () => _ = OpenWithPickerAsync(csv: true), "Ctrl+I"));
         menu.Items.Add(MenuEntry("Export as PNG…", () => _ = ExportPngAsync(), "Ctrl+E"));
-        if (PrivacyOptions is { } privacy)
+        if (Store is { } store)
+        {
+            menu.Items.Add(new Separator());
+            if (store.IsPremium)
+                menu.Items.Add(new MenuItem { Header = "Premium: no ads. Thank you!", IsEnabled = false });
+            else
+                menu.Items.Add(MenuEntry(store.Price is { } price ? $"Remove ads ({price})" : "Remove ads", () => _ = BuyPremiumAsync()));
+#if DEBUG
+            menu.Items.Add(MenuEntry(store.IsPremium ? "Debug: turn Premium off" : "Debug: pretend to have Premium",
+                () => store.SimulatePremium(!store.IsPremium)));
+#endif
+        }
+        if (PrivacyOptions is { } privacy && !HasPremium)
         {
             menu.Items.Add(new Separator());
             menu.Items.Add(MenuEntry("Ad privacy choices…", privacy));
         }
         menu.ShowAt((Control)sender!);
+    }
+
+    private async Task BuyPremiumAsync()
+    {
+        if (Store is null) return;
+        if (await Store.PurchaseAsync() is { } message) await ShowMessageAsync(message);
     }
 
     private async Task NewBoardAsync()

@@ -102,6 +102,30 @@ your banner unit. Your app ID is used by both. Still to do in AdMob:
 1. In AdMob, set up the GDPR message under **Privacy & messaging** (the consent form shows what you configure there).
 2. Publish an `app-ads.txt` on your developer website (the one in your Play Store listing).
 
+To have one of your own devices always get test ads (even from Release builds), run the app on it, find
+`setTestDeviceIds(Arrays.asList("…"))` in the device log, and add that ID to `TestDeviceIds` in `Ads.cs`.
+
+## Premium (no ads)
+
+A one-time purchase through Google Play Billing removes the ads for good: ☰ → **Remove ads ($1.99)**, with the price
+shown in the user's own currency. Premium users also skip the consent form, since no ads load at all. The code is in
+`StoryBoarder.Android/Billing.cs`.
+
+- Ownership is checked with Google Play every time the app starts or comes back to the foreground. The purchase
+  belongs to the Google account, so it carries over to reinstalls and new phones, and a refund brings the ads back.
+- Each purchase is acknowledged straight away; Google refunds purchases that aren't acknowledged within 3 days.
+- Debug builds add ☰ → **Debug: pretend to have Premium**, to try the ad-free app before the product exists.
+
+To switch it on in Play Console (once a build with this code is on a testing track):
+
+1. Set up a **payments profile** (Settings → Payments profile), if you haven't.
+2. Create a one-time product (Monetize with Play → Products → One-time products) with the product ID **`remove_ads`**
+   (it must match `ProductId` in `Billing.cs`), a name such as "Premium: no ads", and the price, then activate it.
+3. Add yourself and your testers as **license testers** (Settings → License testing). Their purchases are free test
+   transactions, so the whole flow can be tried without paying.
+
+Until the product exists, "Remove ads" says Premium isn't available yet.
+
 ## Publishing on Google Play
 
 1. Bump `<Version>` in `Directory.Build.props` if you like, and **always** bump `ApplicationVersion` in

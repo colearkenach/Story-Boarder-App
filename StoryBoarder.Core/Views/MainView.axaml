@@ -290,7 +290,9 @@
 
                     <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
                         <StackPanel Orientation="Horizontal">
-                            <Button Classes="tool narrow" Click="FileMenu_Click" ToolTip.Tip="File">
+                            <!-- The app menu: on phones it holds the file actions; on tablets too, since it also
+                                 has Remove ads and the ad privacy choices. -->
+                            <Button Classes="tool narrow mobile-only" Click="FileMenu_Click" ToolTip.Tip="Menu">
                                 <c:Icon Data="{StaticResource Icon.Menu}"/>
                             </Button>
                             <!-- Phones and tablets have no title bar, so the board's name shows here. -->
