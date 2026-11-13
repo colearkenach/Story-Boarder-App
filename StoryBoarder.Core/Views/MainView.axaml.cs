@@ -92,6 +92,9 @@ public partial class MainView : UserControl
     /// <summary>Set by the Android app: the one-time purchase that removes ads ("Remove ads" in the File menu).</summary>
     public static IPremiumStore? Store { get; set; }
 
+    /// <summary>Set by the Android app: Google Play requires a link to the privacy policy inside the app.</summary>
+    public static Uri? PrivacyPolicy { get; set; }
+
     private bool HasPremium => Store?.IsPremium == true;
 
     private readonly BoardViewModel _board = new();
@@ -278,11 +281,11 @@ public partial class MainView : UserControl
                 () => store.SimulatePremium(!store.IsPremium)));
 #endif
         }
-        if (PrivacyOptions is { } privacy && !HasPremium)
-        {
-            menu.Items.Add(new Separator());
-            menu.Items.Add(MenuEntry("Ad privacy choices…", privacy));
-        }
+        var adChoices = PrivacyOptions is not null && !HasPremium;
+        if (adChoices || PrivacyPolicy is not null) menu.Items.Add(new Separator());
+        if (adChoices) menu.Items.Add(MenuEntry("Ad privacy choices…", PrivacyOptions!));
+        if (PrivacyPolicy is { } policy)
+            menu.Items.Add(MenuEntry("Privacy policy", () => _ = Top?.Launcher.LaunchUriAsync(policy)));
         menu.ShowAt((Control)sender!);
     }
 

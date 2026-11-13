@@ -1,0 +1,73 @@
+<!doctype html>
+<!-- Google Play feature graphic (1024×500). Render with store/graphics/source/render.ps1. -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 1024px; height: 500px; overflow: hidden; }
+  body {
+    position: relative;
+    font-family: "Segoe UI Variable Display", "Segoe UI", sans-serif;
+    background:
+      radial-gradient(rgba(255,255,255,.13) 1.6px, transparent 1.8px) 0 0 / 26px 26px,
+      linear-gradient(135deg, #7d58f2 0%, #6a43e6 45%, #5530cf 100%);
+    color: #fff;
+  }
+  .brand { position: absolute; left: 64px; top: 0; bottom: 0; width: 420px;
+           display: flex; flex-direction: column; justify-content: center; }
+  .icon { width: 104px; height: 104px; border-radius: 26px;
+          box-shadow: 0 0 0 2px rgba(255,255,255,.35), 0 10px 30px rgba(30,10,90,.45);
+          margin-bottom: 26px; }
+  h1 { font-size: 58px; line-height: 1; margin: 0 0 16px; font-weight: 700; letter-spacing: -0.5px; }
+  .tag { font-size: 26px; line-height: 1.3; margin: 0 0 22px; color: rgba(255,255,255,.92); font-weight: 500; }
+  .features { font-size: 18px; color: rgba(255,255,255,.75); margin: 0; letter-spacing: .2px; }
+
+  .board { position: absolute; left: 520px; top: 42px; width: 470px; height: 416px; border-radius: 22px;
+           background: radial-gradient(#cfd3dc 1.3px, transparent 1.5px) 0 0 / 22px 22px, #f7f8fa;
+           box-shadow: 0 24px 60px rgba(25,8,80,.45); transform: rotate(-2.5deg); overflow: hidden; }
+  .frame { position: absolute; background: #fff; border: 1.5px solid #dfe2e8; border-radius: 6px; }
+  .frame b { position: absolute; top: -24px; left: 2px; font-size: 14px; color: #3a3f4c; font-weight: 600; }
+  .note { position: absolute; padding: 10px; box-sizing: border-box; color: #1f2330; font-size: 15px;
+          line-height: 1.25; display: flex; align-items: center; justify-content: center; text-align: center;
+          box-shadow: 0 2px 4px rgba(0,0,0,.12); font-family: "Segoe UI", sans-serif; }
+  .sel { outline: 2px solid #7048e8; outline-offset: 3px; }
+  svg { position: absolute; left: 0; top: 0; }
+</style>
+</head>
+<body>
+  <div class="brand">
+    <img class="icon" src="../../../docs/icon.png" alt="">
+    <h1>Story Boarder</h1>
+    <p class="tag">Plan your story on an<br>infinite board.</p>
+    <p class="features">Sticky notes · Frames · Arrows · Pictures</p>
+  </div>
+
+  <div class="board">
+    <div class="frame" style="left:30px; top:54px; width:262px; height:330px"><b>Act I · The Lantern</b></div>
+    <div class="note" style="left:50px; top:74px; width:104px; height:104px; background:#fff9b1">Mara steals the lantern</div>
+    <div class="note sel" style="left:170px; top:74px; width:104px; height:104px; background:#ff9d48">The city's lights go out</div>
+    <div class="note" style="left:50px; top:200px; width:104px; height:104px; background:#a6ccf5">Tobin takes the blame</div>
+    <div class="note" style="left:170px; top:200px; width:104px; height:104px; background:#d5f692">The Warden's secret</div>
+    <div class="note" style="left:50px; top:318px; width:224px; height:52px; background:#ffcee0">Midpoint: the lantern shows the truth</div>
+
+    <div class="frame" style="left:318px; top:54px; width:132px; height:250px"><b>Characters</b></div>
+    <div class="note" style="left:332px; top:74px; width:104px; height:104px; background:#c6a2d2">Mara, the lamplighter</div>
+    <div class="note" style="left:332px; top:190px; width:104px; height:100px; background:#e6e6e6">Warden Ilse</div>
+
+    <svg width="470" height="416" viewBox="0 0 470 416">
+      <defs>
+        <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#4a4f5c"/>
+        </marker>
+      </defs>
+      <g stroke="#4a4f5c" stroke-width="2.5" fill="none" marker-end="url(#a)">
+        <line x1="154" y1="126" x2="166" y2="126"/>
+        <line x1="222" y1="178" x2="222" y2="196"/>
+        <line x1="170" y1="252" x2="158" y2="252"/>
+        <line x1="102" y1="304" x2="102" y2="314"/>
+        <path d="M332 240 C 300 240, 300 252, 278 252"/>
+      </g>
+    </svg>
+  </div>
+</body>
+</html>

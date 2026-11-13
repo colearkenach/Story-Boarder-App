@@ -100,7 +100,8 @@ load or click real ads (AdMob can suspend an account for that). Release builds, 
 your banner unit. Your app ID is used by both. Still to do in AdMob:
 
 1. In AdMob, set up the GDPR message under **Privacy & messaging** (the consent form shows what you configure there).
-2. Publish an `app-ads.txt` on your developer website (the one in your Play Store listing).
+2. Publish `store/app-ads.txt` at the root of your developer website (the one in your Play Store listing). See
+   `store/README.md`.
 
 To have one of your own devices always get test ads (even from Release builds), run the app on it, find
 `setTestDeviceIds(Arrays.asList("…"))` in the device log, and add that ID to `TestDeviceIds` in `Ads.cs`.
@@ -114,7 +115,8 @@ shown in the user's own currency. Premium users also skip the consent form, sinc
 - Ownership is checked with Google Play every time the app starts or comes back to the foreground. The purchase
   belongs to the Google account, so it carries over to reinstalls and new phones, and a refund brings the ads back.
 - Each purchase is acknowledged straight away; Google refunds purchases that aren't acknowledged within 3 days.
-- Debug builds add ☰ → **Debug: pretend to have Premium**, to try the ad-free app before the product exists.
+- Debug builds add ☰ → **Debug: pretend to have Premium**, to try the ad-free app before the product exists (and
+  for screenshots without ads). It stays on, even after the app restarts, until you turn it off.
 
 To switch it on in Play Console (once a build with this code is on a testing track):
 
@@ -127,6 +129,10 @@ To switch it on in Play Console (once a build with this code is on a testing tra
 Until the product exists, "Remove ads" says Premium isn't available yet.
 
 ## Publishing on Google Play
+
+The full launch checklist (account, testing requirements, AdMob, store listing) is in
+[`store/README.md`](store/README.md), with the listing text, form answers and graphics next to it. Building and
+uploading a version:
 
 1. Bump `<Version>` in `Directory.Build.props` if you like, and **always** bump `ApplicationVersion` in
    `StoryBoarder.Android/StoryBoarder.Android.csproj` (every upload needs a higher number).
@@ -145,9 +151,7 @@ Until the product exists, "Remove ads" says Premium isn't available yet.
 
    with the password in the `STORYBOARDER_KEY_PASS` environment variable. The `.aab` lands in
    `StoryBoarder.Android/bin/Release/net10.0-android/publish/`.
-4. Upload it in Play Console, with Play App Signing turned on. The store listing also needs a privacy policy URL,
-   the **Contains ads** declaration, the Data safety form (the ads SDK collects the advertising ID and device data),
-   a content rating, a 512×512 icon and screenshots for phones and tablets.
+4. Upload it in Play Console, with Play App Signing turned on.
 
 The Android app ID is `com.blackflamestudios.storyboarder` (`ApplicationId` in the Android project). It can't be
 changed after the first upload.
@@ -187,7 +191,10 @@ StoryBoarder.Core/            the whole app, shared by Windows and Android
   Controls/FitText.cs         sticky-note text that shrinks to fit
   Controls/SelectionAdorner.cs selection outlines and handles, drawn at screen size
 StoryBoarder.Desktop/         Windows (and macOS/Linux) app: Program.cs, icon, publish profile for the installer
-StoryBoarder.Android/         Android app: activity, AdMob banner and consent (Ads.cs, AdBanner.cs), icons
+StoryBoarder.Android/         Android app: activity, AdMob banner and consent (Ads.cs, AdBanner.cs), Premium
+                              purchase (Billing.cs), icons
 Installer/
   Package.wxs                 what the MSI installs
+docs/                         website and privacy policy, published with GitHub Pages
+store/                        Google Play launch checklist, listing text, form answers, graphics, app-ads.txt
 ```

@@ -18,7 +18,7 @@ internal sealed class Billing : Java.Lang.Object, IPremiumStore, IPurchasesUpdat
     /// </summary>
     public const string ProductId = "remove_ads";
 
-    private const string PrefsName = "billing", PremiumKey = "premium";
+    private const string PrefsName = "billing", PremiumKey = "premium", SimulateKey = "simulate";
 
     private BillingClient? _client;
     private ProductDetails? _product;
@@ -27,6 +27,7 @@ internal sealed class Billing : Java.Lang.Object, IPremiumStore, IPurchasesUpdat
     private bool _refreshing;
     private bool _available; // Google Play Billing answered: Play Store installed, signed in, reachable
     private bool _connecting;
+    private bool _simulated; // Debug builds' "pretend to have Premium": Google Play's answer is ignored until it's turned off
 
     public static Billing Instance { get; } = new();
 
@@ -40,6 +41,9 @@ internal sealed class Billing : Java.Lang.Object, IPremiumStore, IPurchasesUpdat
         _prefs = context.GetSharedPreferences(PrefsName, FileCreationMode.Private);
         // The last known answer, so a Premium user doesn't see an ad flash up while Google Play replies.
         IsPremium = _prefs?.GetBoolean(PremiumKey, false) ?? false;
+#if DEBUG
+        _simulated = _prefs?.GetBoolean(SimulateKey, false) ?? false;
+#endif
         _client = BillingClient.NewBuilder(context)
             .SetListener(this)
             .EnablePendingPurchases(PendingPurchasesParams.NewBuilder().EnableOneTimeProducts().Build())
@@ -192,10 +196,19 @@ internal sealed class Billing : Java.Lang.Object, IPremiumStore, IPurchasesUpdat
                 }
             }
         }
-        if (owned || everythingOwned) SetState(owned, Price);
+        if ((owned || everythingOwned) && !_simulated) SetState(owned, Price);
     }
 
-    public void SimulatePremium(bool premium) => SetState(premium, Price);
+    /// <summary>
+    /// Debug builds only (☰ menu): pretend to own Premium, e.g. for screenshots without ads. It lasts across restarts
+    /// until it's turned off; turning it off hands the answer back to Google Play at the next check.
+    /// </summary>
+    public void SimulatePremium(bool premium)
+    {
+        _simulated = premium;
+        _prefs?.Edit()?.PutBoolean(SimulateKey, premium)?.Apply();
+        SetState(premium, Price);
+    }
 
     private void SetState(bool premium, string? price)
     {
