@@ -36,9 +36,9 @@ Chromebooks), and 16 KB memory-page support.
 4. **AdMob consent messages.** AdMob → Privacy & messaging → create and publish a **European regulations** (GDPR)
    message for Story Boarder, and optionally a **US state regulations** message. The app already shows whatever is
    published there. Without the GDPR message, users in Europe get no consent form and very few ads.
-5. **Upload key.** Make it once with the `keytool` command in the main README (section "Publishing on Google Play"),
-   and keep the `.keystore` file and its password together somewhere safe outside the repository, with a backup
-   (a password manager or cloud drive). If it's ever lost, Play Console can reset it, but that takes a few days.
+5. **Upload key.** `build-release.ps1` (repository root) makes it the first time it runs, in
+   `Documents\StoryBoarderKeys\`. Keep the `.keystore` file and its password safe, with a backup (a password manager
+   or cloud drive). If it's ever lost, Play Console can reset it, but that takes a few days.
 6. **Line up testers.** New personal developer accounts must run a closed test with **at least 12 testers who stay
    opted in for 14 days in a row** before the app can go public. Ask 15–20 people (some drop out), and collect the
    Gmail addresses of their Google accounts; each needs an Android phone or tablet. Ask them to really use the app
@@ -54,7 +54,7 @@ Chromebooks), and 16 KB memory-page support.
    and `graphics/`.
 4. **Payments profile** (Settings → Payments profile), needed to sell Premium.
 5. **Upload a build to Internal testing.** Bump `ApplicationVersion` in `StoryBoarder.Android.csproj` for every
-   upload, build the signed bundle (main README), upload it, and add yourself as a tester. Internal testing has no
+   upload after the first, build the signed bundle with `build-release.ps1`, upload it, and add yourself as a tester. Internal testing has no
    review wait, and the first upload is what unlocks creating in-app products.
 6. **Create the `remove_ads` product** (details in `play-console-answers.md`) and activate it. Add yourself under
    Settings → **License testing**, install from the internal testing link, and buy Premium. License testers aren't

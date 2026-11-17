@@ -136,22 +136,17 @@ uploading a version:
 
 1. Bump `<Version>` in `Directory.Build.props` if you like, and **always** bump `ApplicationVersion` in
    `StoryBoarder.Android/StoryBoarder.Android.csproj` (every upload needs a higher number).
-2. Make an upload key once, and keep it (and its passwords) safe, outside the repository:
+2. Build the signed app bundle:
 
    ```bash
-   keytool -genkeypair -v -keystore storyboarder-upload.keystore -alias upload -keyalg RSA -keysize 2048 -validity 10000
+   powershell -ExecutionPolicy Bypass -File build-release.ps1
    ```
 
-   (`keytool` is in `C:\Program Files\Android\Android Studio\jbr\bin`.)
-3. Build the signed app bundle:
-
-   ```bash
-   dotnet publish StoryBoarder.Android -c Release -p:AndroidKeyStore=true -p:AndroidSigningKeyStore=C:\path\to\storyboarder-upload.keystore -p:AndroidSigningKeyAlias=upload -p:AndroidSigningKeyPass=env:STORYBOARDER_KEY_PASS -p:AndroidSigningStorePass=env:STORYBOARDER_KEY_PASS
-   ```
-
-   with the password in the `STORYBOARDER_KEY_PASS` environment variable. The `.aab` lands in
-   `StoryBoarder.Android/bin/Release/net10.0-android/publish/`.
-4. Upload it in Play Console, with Play App Signing turned on.
+   The first time, it creates the upload key in `Documents\StoryBoarderKeys\storyboarder-upload.keystore` (outside
+   the repository). Back that file up and keep its password in a password manager: every update must be signed with
+   the same key. The script asks for the password each time, checks it, builds, verifies the signature, and opens
+   the folder with `com.blackflamestudios.storyboarder-Signed.aab`.
+3. Upload that `.aab` in Play Console, with Play App Signing turned on (the default).
 
 The Android app ID is `com.blackflamestudios.storyboarder` (`ApplicationId` in the Android project). It can't be
 changed after the first upload.
