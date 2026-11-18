@@ -10,7 +10,7 @@
     <ApplicationId>com.blackflamestudios.storyboarder</ApplicationId>
     <ApplicationTitle>Story Boarder</ApplicationTitle>
     <!-- Must go up by at least 1 for every upload to Google Play. -->
-    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationVersion>3</ApplicationVersion>
     <ApplicationDisplayVersion>$(Version)</ApplicationDisplayVersion>
     <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
   </PropertyGroup>
@@ -25,6 +25,11 @@
   <!-- Google Play takes an app bundle (.aab); debug builds stay .apk for installing on a device or emulator. -->
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <AndroidPackageFormat>aab</AndroidPackageFormat>
+    <!-- R8 shrinks, optimizes and obfuscates the Java code. Google Play wants at least 25% of the code obfuscated,
+         optimized and shrunk (from February 2027). Only private members get renamed: C# finds every other Java class
+         and method by name. -->
+    <AndroidLinkTool>r8</AndroidLinkTool>
+    <AndroidR8ObfuscationMode>private-members</AndroidR8ObfuscationMode>
   </PropertyGroup>
 
   <ItemGroup>

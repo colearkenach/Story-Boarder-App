@@ -26,10 +26,13 @@ internal static class Ads
     /// <summary>
     /// Your own phones and tablets, which always get test ads, even in Release builds with the real ad unit.
     /// To add one, run the app on it and look in the device log for "setTestDeviceIds(Arrays.asList("…"))".
+    /// The ID depends on the key the app is signed with, so a device has one ID for builds installed from Android
+    /// Studio or the command line and another for the app installed from Google Play (which signs it with its own key).
     /// </summary>
     private static readonly string[] TestDeviceIds =
     [
-        "AFE3D92A56E62581A4ECF2CC6C73043F", // Pixel Fold
+        "AFE3D92A56E62581A4ECF2CC6C73043F", // Pixel Fold, local builds
+        "1DAB97BCBD35D4742202D01621A2A958", // Pixel Fold, installed from Google Play
     ];
 
     private static readonly List<WeakReference<AdBanner>> Banners = new();

@@ -148,6 +148,12 @@ uploading a version:
    the folder with `com.blackflamestudios.storyboarder-Signed.aab`.
 3. Upload that `.aab` in Play Console, with Play App Signing turned on (the default).
 
+Release builds run R8, which shrinks, optimizes and partly obfuscates the Java code (Google Play requires it from
+February 2027; the settings are in `StoryBoarder.Android.csproj`). The bundle carries R8's mapping file, so crash reports
+in Play Console still show the real names. If a Release build ever crashes with `ClassNotFoundException` or
+`NoSuchMethodError` where a Debug build doesn't, R8 removed something that's only found by name: keep it with a
+`-keep` rule in a `.cfg` file added to the project as a `ProguardConfiguration` item.
+
 The Android app ID is `com.blackflamestudios.storyboarder` (`ApplicationId` in the Android project). It can't be
 changed after the first upload.
 

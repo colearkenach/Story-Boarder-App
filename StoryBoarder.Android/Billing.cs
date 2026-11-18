@@ -86,21 +86,24 @@ internal sealed class Billing : Java.Lang.Object, IPremiumStore, IPurchasesUpdat
         _refreshing = true;
         try
         {
-            var owned = await client.QueryPurchasesAsync(
-                QueryPurchasesParams.NewBuilder().SetProductType(BillingClient.ProductType.Inapp).Build());
-            if (owned.Result.ResponseCode == BillingResponseCode.Ok)
-                await HandlePurchasesAsync(owned.Purchases, everythingOwned: true);
+            var (ownedResult, purchases) = await GetPurchasesAsync(client);
+            if (ownedResult.ResponseCode == BillingResponseCode.Ok)
+                await HandlePurchasesAsync(purchases, everythingOwned: true);
 
             var product = QueryProductDetailsParams.Product.NewBuilder()
                 .SetProductId(ProductId)
                 .SetProductType(BillingClient.ProductType.Inapp)
                 .Build();
-            var details = await client.QueryProductDetailsAsync(
+            var (detailsResult, details) = await GetProductDetailsAsync(client,
                 QueryProductDetailsParams.NewBuilder().SetProductList([product]).Build());
-            if (details.Result.ResponseCode == BillingResponseCode.Ok)
+            if (detailsResult.ResponseCode == BillingResponseCode.Ok)
             {
-                _product = details.ProductDetailsList?.FirstOrDefault(p => p.ProductId == ProductId);
+                _product = details?.ProductDetailsList?.FirstOrDefault(p => p.ProductId == ProductId);
                 SetState(IsPremium, _product?.GetOneTimePurchaseOfferDetails()?.FormattedPrice);
+                // Google Play's reason (an UnfetchedProduct status code), for the device log: adb logcat -s StoryBoarder
+                if (_product is null)
+                    global::Android.Util.Log.Warn("StoryBoarder", "Premium isn't available: " + string.Join(", ",
+                        details?.UnfetchedProductList?.Select(p => $"{p.ProductId} status {p.StatusCodeValue}") ?? []));
             }
         }
         catch (Exception ex) when (ex is Java.Lang.Exception or InvalidOperationException)
@@ -145,6 +148,38 @@ internal sealed class Billing : Java.Lang.Object, IPremiumStore, IPurchasesUpdat
         }
         // Google Play's purchase sheet is up; the outcome arrives in OnPurchasesUpdated.
         return await _purchase.Task;
+    }
+
+    // The binding's own QueryProductDetailsAsync (Xamarin.Android.Google.BillingClient 9.1.0.2) hands back an empty
+    // result even when Google Play found the product, so these two take Google Play's answer from its listener directly.
+    private static Task<(BillingResult Result, QueryProductDetailsResult? Details)> GetProductDetailsAsync(
+        BillingClient client, QueryProductDetailsParams parameters)
+    {
+        var done = new TaskCompletionSource<(BillingResult, QueryProductDetailsResult?)>();
+        client.QueryProductDetails(parameters, new ProductDetailsListener(done));
+        return done.Task;
+    }
+
+    private static Task<(BillingResult Result, IList<Purchase>? Purchases)> GetPurchasesAsync(BillingClient client)
+    {
+        var done = new TaskCompletionSource<(BillingResult, IList<Purchase>?)>();
+        client.QueryPurchases(QueryPurchasesParams.NewBuilder().SetProductType(BillingClient.ProductType.Inapp).Build(),
+            new PurchasesListener(done));
+        return done.Task;
+    }
+
+    private sealed class ProductDetailsListener(TaskCompletionSource<(BillingResult, QueryProductDetailsResult?)> done)
+        : Java.Lang.Object, IProductDetailsResponseListener
+    {
+        public void OnProductDetailsResponse(BillingResult result, QueryProductDetailsResult details) =>
+            done.TrySetResult((result, details));
+    }
+
+    private sealed class PurchasesListener(TaskCompletionSource<(BillingResult, IList<Purchase>?)> done)
+        : Java.Lang.Object, IPurchasesResponseListener
+    {
+        public void OnQueryPurchasesResponse(BillingResult result, IList<Purchase> purchases) =>
+            done.TrySetResult((result, purchases));
     }
 
     public void OnPurchasesUpdated(BillingResult result, IList<Purchase>? purchases) =>
